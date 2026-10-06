@@ -5,9 +5,9 @@ import glob
 import os
 import re
 
-from .checks import check_file, verse_id
+from .checks import check_file, style_findings, verse_id
 from .index import Index, read_manifest, rel, root_dir, tool_dir
-from .text import WORD_RE, key
+from .text import WORD_RE, key, parse_file
 
 ACCEPTED = os.path.join(tool_dir(), 'accepted.txt')
 SKIP_METER = os.path.join(tool_dir(), 'skip-meter.txt')
@@ -98,14 +98,24 @@ class Session:
         finally:
             self.idx.restore(removed)
 
+    def style(self, path):
+        """House-style findings only (no word scoring or metre: fast)."""
+        rp = rel(path)
+        removed = self.idx.without([rp])
+        try:
+            return style_findings(parse_file(path), self.idx, self.accepted, rp)
+        finally:
+            self.idx.restore(removed)
+
     def close(self):
         if self.meter:
             self.meter.save_cache()
 
 
-def replace_word(path, lineno, word, occ, replacement):
+def replace_word(path, lineno, word, occ, replacement, join_next=False):
     """Replace the occ-th occurrence of `word` (as a whole Devanagari token)
-    on source line `lineno`. Returns the new line, or raises ValueError."""
+    on source line `lineno` -- with join_next, together with the space and
+    the token after it. Returns the new line, or raises ValueError."""
     with open(path, encoding='utf-8', newline='') as f:
         lines = f.read().split('\n')
     if not 1 <= lineno <= len(lines):
@@ -116,7 +126,13 @@ def replace_word(path, lineno, word, occ, replacement):
         raise ValueError('word not found on that source line '
                          '(it may span two lines); edit the line instead')
     m = hits[occ]
-    lines[lineno - 1] = line[:m.start()] + replacement + line[m.end():]
+    end = m.end()
+    if join_next:
+        nxt = WORD_RE.search(line, end)
+        if nxt is None or line[end:nxt.start()].strip():
+            raise ValueError('no following word on the same line to join with')
+        end = nxt.end()
+    lines[lineno - 1] = line[:m.start()] + replacement + line[end:]
     _write(path, lines)
     return lines[lineno - 1]
 

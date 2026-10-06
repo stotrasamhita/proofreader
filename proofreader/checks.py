@@ -42,11 +42,6 @@ ORTHO_RULES = [
 ]
 _ORTHO = [(n, re.compile(p), w, m) for n, p, w, m in ORTHO_RULES]
 
-STYLE_RULES = [
-    ('anusvara-before-stop', re.compile('ं(?!ज्ञ)[कखगघचछजझटठडढतथदधपफबभ]'),
-     'anusvara before a stop; house style uses the class nasal (शङ्कर, not शंकर)'),
-]
-
 REPORT_THRESHOLD = 3.0
 
 # Edits that OCR and typists commonly make in Devanagari: visually similar
@@ -76,6 +71,9 @@ class Finding:
     reasons: list = field(default_factory=list)
     suggestion: str = ''
     context: str = ''
+    occ: int = 0              # style: which occurrence of text on the line
+    join_next: bool = False   # style: replacement also consumes the next word
+    mechanical: bool = False  # style: safe to apply without review
 
 
 def _edit_near_end(a, b):
@@ -191,13 +189,25 @@ def check_file(path, idx, meter=None, accepted=frozenset(), display_path=None,
             if s >= threshold:
                 out.append(Finding(display_path, line.lineno, 'word', word, round(s, 1),
                                    reasons, sugg, line.text))
-            if style:
-                for name, rx, msg in STYLE_RULES:
-                    if rx.search(clean(word)):
-                        out.append(Finding(display_path, line.lineno, 'style', word, 0,
-                                           [f'{name}: {msg}'], '', line.text))
         if meter and unit.kind == 'verse':
             out.extend(_meter_findings(unit, meter, display_path, accepted))
+    if style:
+        out.extend(style_findings(units, idx, accepted, display_path))
+    return out
+
+
+def style_findings(units, idx, accepted=frozenset(), display_path=''):
+    """House-style findings (kind 'style') for parsed units."""
+    from .style import check_units
+    lines = {l.lineno: l.text for u in units for l in u.lines}
+    out = []
+    for i in check_units(units, idx):
+        if key(i.word) in accepted:
+            continue
+        out.append(Finding(display_path, i.lineno, 'style', i.word,
+                           1.0 if i.mechanical else 0.5, [f'{i.rule}: {i.note}'],
+                           i.replacement, lines.get(i.lineno, ''), i.occ, i.join_next,
+                           i.mechanical))
     return out
 
 

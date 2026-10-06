@@ -30,6 +30,7 @@
   --meter: #fb923c; --ok: #7fc28b; --sel: #ece8df;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--ui); display: grid; height: 100vh;
   grid-template-columns: 290px 1fr 360px; grid-template-rows: minmax(0, 1fr); }
@@ -87,6 +88,8 @@ kbd { font: 11px var(--ui); border: 1px solid var(--line); border-bottom-width: 
 .flag.mid { background: var(--mid); color: var(--mid-ink); }
 .flag.lo { background: var(--lo); color: var(--lo-ink); }
 .flag.sel { outline: 2px solid var(--sel); outline-offset: 1px; }
+.flag.sty { background: none; color: inherit; border-bottom: 2px dashed var(--accent); border-radius: 0; }
+.flag.sty.mech { border-bottom-style: solid; }
 
 /* detail */
 #detail { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 16px; }
@@ -139,7 +142,9 @@ kbd { font: 11px var(--ui); border: 1px solid var(--line); border-bottom-width: 
     <span class="path" id="fpath">Choose a file</span>
     <span id="badges"></span>
     <span class="spacer"></span>
-    <label>Min score <input type="range" id="thr" min="2" max="15" step="1"> <b id="thrv"></b></label>
+    <select id="mode" class="btn"><option value="errors">Errors</option><option value="style">House style</option></select>
+    <label id="thrbox">Min score <input type="range" id="thr" min="2" max="15" step="1"> <b id="thrv"></b></label>
+    <button class="btn" id="mechbtn" hidden>Apply all mechanical</button>
     <label><input type="checkbox" id="only"> Flagged only</label>
     <button class="btn" id="diffbtn" disabled>Diff</button>
     <button class="btn" id="approvebtn" disabled>Approve as gold</button>
@@ -158,7 +163,9 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
                 set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 
-let files = [], doc = null, sel = null, thr = store.get('thr', 5), only = store.get('only', false);
+let files = [], doc = null, sel = null, thr = store.get('thr', 5), only = store.get('only', false),
+    mode = new URLSearchParams(location.search).get('mode') || store.get('mode', 'errors');
+$('#mode').value = mode;
 $('#thr').value = thr; $('#thrv').textContent = thr; $('#only').checked = only;
 
 async function api(path, body) {
@@ -171,7 +178,14 @@ async function api(path, body) {
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2200); }
 const level = s => s >= 10 ? 'hi' : s >= 6 ? 'mid' : 'lo';
-const visible = f => f.score >= thr && f.kind !== 'style';
+const visible = f => mode === 'style' ? f.kind === 'style' : (f.kind !== 'style' && f.score >= thr);
+const segId = ids => ids.find(id => visible(doc.findings[id]));
+function syncMode() {
+  $('#thrbox').hidden = mode === 'style';
+  $('#mechbtn').hidden = mode !== 'style' || !doc;
+  if (doc) { const n = doc.findings.filter(f => f.kind === 'style' && f.mechanical).length;
+             $('#mechbtn').textContent = `Apply all mechanical (${n})`; $('#mechbtn').disabled = !n; }
+}
 
 // ---- file list -------------------------------------------------------------
 async function loadFiles() {
@@ -186,7 +200,7 @@ function renderFiles() {
     if (q && !f.path.toLowerCase().includes(q)) continue;
     const i = f.path.lastIndexOf('/'), d = f.path.slice(0, i), n = f.path.slice(i + 1);
     if (d !== dir) { html += `<div class="dir">${esc(d)}</div>`; dir = d; }
-    const c = f.ready ? f.scores.filter(s => s >= thr).length : '…';
+    const c = !f.ready ? '…' : mode === 'style' ? f.style : f.scores.filter(s => s >= thr).length;
     html += `<button class="file${doc && doc.path === f.path ? ' on' : ''}" data-p="${esc(f.path)}">
       <span class="name">${esc(n)} ${f.gold ? '<span class="gold">✓</span>' : ''}</span><span class="count">${c}</span></button>`;
   }
@@ -207,7 +221,10 @@ function setDoc(d, keepSel) {
   const prevLine = keepSel && sel != null && doc ? doc.findings[sel].line : null;
   doc = d; sel = null;
   const fi = files.find(f => f.path === d.path);
-  if (fi) { fi.ready = true; fi.scores = d.findings.map(f => f.score); fi.gold = d.gold; }
+  if (fi) { fi.ready = true; fi.gold = d.gold;
+            fi.scores = d.findings.filter(f => f.kind !== 'style').map(f => f.score);
+            fi.style = d.findings.filter(f => f.kind === 'style').length; }
+  syncMode();
   renderFiles(); renderDoc();
   if (prevLine != null) { const n = order().find(f => f.line >= prevLine); if (n) select(n.id); }
   else renderDetail();
@@ -225,15 +242,16 @@ function renderDoc() {
   let html = '', skipped = 0;
   for (const u of doc.units) {
     const mf = u.meter != null && visible(doc.findings[u.meter]) ? doc.findings[u.meter] : null;
-    const has = mf || u.lines.some(l => l.segs.some(s => s[1] >= 0 && visible(doc.findings[s[1]])));
+    const has = mf || u.lines.some(l => l.segs.some(s => segId(s[1]) != null));
     if (only && !has) { skipped += u.lines.length; continue; }
     if (skipped) { html += `<div class="gap">… ${skipped} line(s) without flags</div>`; skipped = 0; }
     html += `<div class="unit ${u.kind}${mf ? ' mflag' : ''}" ${mf ? `data-id="${mf.id}"` : ''}>`;
     for (const l of u.lines) {
       html += `<div class="line"><span class="ln">${l.n}</span><span class="content">`;
-      for (const [t, id] of l.segs) {
-        const f = id >= 0 ? doc.findings[id] : null;
-        html += f && visible(f) ? `<button class="flag ${level(f.score)}" data-id="${id}">${esc(t)}</button>` : esc(t);
+      for (const [t, ids] of l.segs) {
+        const id = segId(ids), f = id != null ? doc.findings[id] : null;
+        const cls = !f ? '' : f.kind === 'style' ? 'sty' + (f.mechanical ? ' mech' : '') : level(f.score);
+        html += f ? `<button class="flag ${cls}" data-id="${id}">${esc(t)}</button>` : esc(t);
       }
       html += '</span></div>';
     }
@@ -243,7 +261,9 @@ function renderDoc() {
   if (skipped) html += `<div class="gap">… ${skipped} line(s) without flags</div>`;
   $('#text').innerHTML = html || '<div class="empty">Nothing to show.</div>';
   $('#text').scrollTop = 0;
-  if (!vis.length) $('#detail').innerHTML = `<div class="empty">No flags at score ≥ ${thr}. ${doc.gold ? '' : 'If the text is done, approve it as gold.'}</div>`;
+  if (!vis.length) $('#detail').innerHTML = mode === 'style'
+    ? '<div class="empty">No house-style issues in this file.</div>'
+    : `<div class="empty">No flags at score ≥ ${thr}. ${doc.gold ? '' : 'If the text is done, approve it as gold.'}</div>`;
 }
 $('#text').addEventListener('click', e => {
   const t = e.target.closest('.flag') || e.target.closest('.unit.mflag');
@@ -266,9 +286,17 @@ function step(d) {
 function renderDetail() {
   if (sel == null) { if (doc) $('#detail').innerHTML = `<div class="empty">${order().length} flag(s) at score ≥ ${thr}. Press <kbd>j</kbd> to start.</div>`; return; }
   const f = doc.findings[sel], o = order(), pos = o.findIndex(x => x.id === sel) + 1;
-  const fixable = f.kind === 'word' && f.occ != null && !f.spans_lines;
-  let h = `<h2>${f.kind === 'meter' ? 'Metre' : 'Word'} · ${pos} of ${o.length}</h2>`;
-  if (f.kind === 'word') {
+  const fixable = (f.kind === 'word' || f.kind === 'style') && f.occ != null && !f.spans_lines;
+  let h = `<h2>${{meter: 'Metre', word: 'Word', style: 'House style'}[f.kind]} · ${pos} of ${o.length}</h2>`;
+  if (f.kind === 'style') {
+    h += `<div class="word">${esc(f.text)}</div>
+      <div class="meta">line ${f.line} · ${f.mechanical ? 'mechanical fix' : 'review'}</div>
+      <ul class="reasons">${f.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
+      <div class="row"><button class="btn primary" id="apply">Apply <span class="sugg">${esc(f.suggestion)}</span> <kbd>Enter</kbd></button></div>
+      <div class="row"><button class="btn" id="accept">Keep as is <kbd>a</kbd></button>
+      <button class="btn" id="editbtn">Edit line <kbd>e</kbd></button>
+      <button class="btn" id="next">Skip <kbd>j</kbd></button></div>`;
+  } else if (f.kind === 'word') {
     h += `<div class="word">${esc(f.text)}</div><div class="meta">line ${f.line} · score ${f.score}</div>
       <ul class="reasons">${f.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`;
     if (f.suggestion && fixable)
@@ -301,7 +329,8 @@ async function act(path, body, msg) {
 function fix(rep) {
   const f = doc.findings[sel];
   if (!rep || rep === f.text) return;
-  act('/api/fix', { path: doc.path, line: f.line, word: f.text, occ: f.occ, replacement: rep }, `Replaced with ${rep}`);
+  act('/api/fix', { path: doc.path, line: f.line, word: f.text, occ: f.occ, replacement: rep,
+                    join_next: !!f.join_next }, `Replaced with ${rep}`);
 }
 function acceptWord() {
   const f = doc.findings[sel];
@@ -331,6 +360,12 @@ async function editLine() {
 // ---- toolbar ---------------------------------------------------------------
 $('#thr').addEventListener('input', e => { thr = +e.target.value; $('#thrv').textContent = thr; store.set('thr', thr);
   renderFiles(); if (doc) { sel = null; renderDoc(); renderDetail(); } });
+$('#mode').addEventListener('change', e => { mode = e.target.value; store.set('mode', mode); syncMode();
+  renderFiles(); if (doc) { sel = null; renderDoc(); renderDetail(); } });
+$('#mechbtn').addEventListener('click', async () => {
+  try { const d = await api('/api/style-apply', { path: doc.path }); setDoc(d); toast(`Applied ${d.applied} mechanical fix(es)`); }
+  catch (e) { toast('⚠ ' + e.message); }
+});
 $('#only').addEventListener('change', e => { only = e.target.checked; store.set('only', only); if (doc) { renderDoc(); if (sel != null) select(sel); } });
 $('#approvebtn').addEventListener('click', () => {
   if (confirm(`Add ${doc.path} to the gold corpus? The index is rebuilt (a few seconds).`))
@@ -351,7 +386,7 @@ document.addEventListener('keydown', e => {
   const f = sel != null ? doc.findings[sel] : null;
   if (e.key === 'j' || e.key === 'n') step(1);
   else if (e.key === 'k' || e.key === 'p') step(-1);
-  else if (e.key === 'Enter' && f && f.suggestion && f.kind === 'word' && f.occ != null && !f.spans_lines) fix(f.suggestion);
+  else if (e.key === 'Enter' && f && f.suggestion && f.kind !== 'meter' && f.occ != null && !f.spans_lines) fix(f.suggestion);
   else if (e.key === 'a' && f) f.kind === 'meter' ? acceptVerse() : acceptWord();
   else if (e.key === 'e' && f) { e.preventDefault(); editLine(); }
   else return;
@@ -359,6 +394,7 @@ document.addEventListener('keydown', e => {
 });
 
 // #path or #path:line opens a file (and the first flag at/after line)
+syncMode();
 loadFiles().then(async () => {
   const m = decodeURIComponent(location.hash.slice(1)).match(/^(.*?)(?::(\d+))?$/);
   const want = m && m[1] && files.some(f => f.path === m[1]) ? m[1] : store.get('last');

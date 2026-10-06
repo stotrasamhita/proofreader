@@ -53,7 +53,7 @@ class Reviewer:
             hit = self.cache.get(rp)
             if hit and hit[0] == mtime and hit[1] == self.epoch:
                 return hit[2]
-            findings = self.session.check(ap, FLOOR)
+            findings = self.session.check(ap, FLOOR, style=True)
             data = build_payload(rp, ap, findings, rp in self.session.gold)
             self.cache[rp] = (mtime, self.epoch, data)
             return data
@@ -65,7 +65,8 @@ class Reviewer:
             row = {'path': rp, 'gold': rp in self.session.gold, 'ready': bool(hit)}
             if hit:
                 fs = hit[2]['findings']
-                row['scores'] = [f['score'] for f in fs]
+                row['scores'] = [f['score'] for f in fs if f['kind'] != 'style']
+                row['style'] = sum(f['kind'] == 'style' for f in fs)
             out.append(row)
         return out
 
@@ -79,7 +80,7 @@ class Reviewer:
 def build_payload(rp, ap, findings, gold):
     """Units with lines split into plain/flagged segments, plus findings."""
     by_line, meter_at = {}, {}
-    fl = []
+    fl, style_at = [], {}
     for f in findings:
         d = {'id': len(fl), 'kind': f.kind, 'line': f.line, 'text': f.text,
              'score': f.score, 'reasons': f.reasons, 'suggestion': f.suggestion}
@@ -88,6 +89,10 @@ def build_payload(rp, ap, findings, gold):
             by_line.setdefault(f.line, []).append(d)
         elif f.kind == 'meter':
             meter_at[f.line] = d
+        elif f.kind == 'style':
+            d.update(occ=f.occ, join_next=f.join_next, mechanical=f.mechanical,
+                     spans_lines=False)
+            style_at[(f.line, f.text, f.occ)] = d
     units = []
     for u in parse_file(ap):
         lines = []
@@ -99,19 +104,25 @@ def build_payload(rp, ap, findings, gold):
                 t = m.group(0)
                 occ = seen.get(t, 0)
                 seen[t] = occ + 1
+                ids = []
                 hit = next((d for d in pending if d['text'] == t or
                             (continued and d['text'].startswith(t))), None)
-                if hit is None:
+                if hit is not None:
+                    pending.remove(hit)
+                    hit['occ'] = occ
+                    hit['spans_lines'] = hit['text'] != t
+                    ids.append(hit['id'])
+                st = style_at.get((line.lineno, t, occ))
+                if st is not None:
+                    ids.append(st['id'])
+                if not ids:
                     continue
-                pending.remove(hit)
-                hit['occ'] = occ
-                hit['spans_lines'] = hit['text'] != t
                 if m.start() > pos:
-                    segs.append([line.text[pos:m.start()], -1])
-                segs.append([t, hit['id']])
+                    segs.append([line.text[pos:m.start()], []])
+                segs.append([t, ids])
                 pos = m.end()
             if pos < len(line.text):
-                segs.append([line.text[pos:], -1])
+                segs.append([line.text[pos:], []])
             lines.append({'n': line.lineno, 'segs': segs})
         meter = meter_at.get(u.lines[0].lineno) if u.kind == 'verse' else None
         units.append({'kind': u.kind, 'lines': lines,
@@ -187,8 +198,24 @@ def make_handler(rv):
 
             def fix():
                 replace_word(rv.path(b['path']), int(b['line']), b['word'],
-                             int(b.get('occ', 0)), b['replacement'])
+                             int(b.get('occ', 0)), b['replacement'], bool(b.get('join_next')))
                 return rv.payload(b['path'])
+
+            def style_apply():
+                """Apply every mechanical style fix in the file."""
+                ap = rv.path(b['path'])
+                todo = [f for f in rv.payload(b['path'])['findings']
+                        if f['kind'] == 'style' and f['mechanical']]
+                done = 0
+                for f in sorted(todo, key=lambda f: (f['line'], -f['occ'])):
+                    try:
+                        replace_word(ap, f['line'], f['text'], f['occ'], f['suggestion'])
+                        done += 1
+                    except ValueError:
+                        pass
+                out = rv.payload(b['path'])
+                out['applied'] = done
+                return out
 
             def edit_line():
                 replace_line(rv.path(b['path']), int(b['line']), b['text'])
@@ -208,7 +235,7 @@ def make_handler(rv):
                 rv.invalidate()
                 return rv.payload(b['path'])
 
-            routes = {'/api/fix': fix, '/api/edit-line': edit_line,
+            routes = {'/api/fix': fix, '/api/edit-line': edit_line, '/api/style-apply': style_apply,
                       '/api/accept': accept, '/api/approve': do_approve}
             if u in routes:
                 return self._guard(routes[u])

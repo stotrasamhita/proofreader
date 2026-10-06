@@ -19,7 +19,7 @@ from .text import char_ngrams, key, parse_file
 NGRAM_SIZES = (1, 2, 3, 4, 5)   # 3/4 for novelty; all orders feed the char LM
 LM_ORDER = 5
 LM_DISCOUNT = 0.75
-INDEX_VERSION = 2
+INDEX_VERSION = 4
 
 
 def root_dir():
@@ -78,6 +78,8 @@ class Index:
         self.version = INDEX_VERSION
         self.words = Counter()           # key -> count over gold
         self.forms = {}                  # key -> most common surface form
+        self.surface = {}                # key -> {surface form: count}
+        self.pairs = Counter()           # (key, key) adjacent within a line
         self.ngrams = {n: Counter() for n in NGRAM_SIZES}
         self.ctx_total = Counter()       # context h -> sum of counts of h+x
         self.ctx_types = Counter()       # context h -> number of distinct x seen after h
@@ -94,13 +96,17 @@ class Index:
             ap = os.path.join(root_dir(), p)
             wc = Counter()
             for u in parse_file(ap):
-                for w, _ in u.words():
+                ws = u.words()
+                for i, (w, line) in enumerate(ws):
                     k = key(w)
                     wc[k] += 1
                     form_counts.setdefault(k, Counter())[w] += 1
+                    if i + 1 < len(ws) and ws[i + 1][1] is line:
+                        idx.pairs[(k, key(ws[i + 1][0]))] += 1
             idx.files[p] = {'sha': _sha(ap), 'rev': _git_rev(ap), 'words': wc}
             idx._add(wc, +1)
         idx.forms = {k: c.most_common(1)[0][0] for k, c in form_counts.items()}
+        idx.surface = {k: dict(c) for k, c in form_counts.items()}   # spellings per key
         log(f'indexed {len(paths)} files, {sum(idx.words.values()):,} words, '
             f'{len(idx.words):,} distinct keys')
         return idx

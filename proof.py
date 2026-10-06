@@ -8,6 +8,7 @@
   proof.py accept WORD...            mark words as valid (never flag again)
   proof.py accept --verse 'FIRST LINE'  mark a verse's metre as valid
   proof.py approve FILE...           add proofread files to gold.txt, rebuild
+  proof.py style FILE|DIR... [--apply mechanical|all]   house-style issues / bulk fixes
   proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
 """
 
@@ -99,6 +100,39 @@ def cmd_approve(args):
     for rp in approve(args.files):
         print(f'approved: {rp}')
     cmd_build(args)
+
+
+def cmd_style(args):
+    """List house-style issues; --apply writes the fixes into the files."""
+    from proofreader.session import replace_word
+    session = Session(meter=False)
+    files = expand_paths(args.files)
+    wanted = set(args.rules.split(',')) if args.rules else None
+    found, applied, failed, shown = Counter(), Counter(), [], []
+    for p in files:
+        fs = session.style(p)
+        rules_of = {id(f): f.reasons[0].split(':')[0] for f in fs}
+        if wanted:
+            fs = [f for f in fs if set(rules_of[id(f)].split('+')) <= wanted]
+        for f in fs:
+            found[rules_of[id(f)]] += 1
+        todo = [f for f in fs if args.apply == 'all' or (args.apply == 'mechanical' and f.mechanical)]
+        for f in sorted(todo, key=lambda f: (f.line, -f.occ)):
+            try:
+                replace_word(p, f.line, f.text, f.occ, f.suggestion, f.join_next)
+                applied[rules_of[id(f)]] += 1
+            except ValueError as e:
+                failed.append(f'{f.path}:{f.line} {f.text}: {e}')
+        shown += [f for f in fs if f not in todo]
+    if not args.summary:
+        print_findings(shown, args.format, 'line')
+    print(f'\n{len(files)} file(s). Found: ' + (', '.join(f'{r} {n}' for r, n in found.most_common()) or 'none'),
+          file=sys.stderr)
+    if args.apply:
+        print('Applied: ' + (', '.join(f'{r} {n}' for r, n in applied.most_common()) or 'none'),
+              file=sys.stderr)
+    for x in failed:
+        print('could not apply: ' + x, file=sys.stderr)
 
 
 def cmd_serve(args):
@@ -204,6 +238,14 @@ def main():
                    help="each argument is a verse's first line; accept its metre")
     p.add_argument('--note', default='')
     p.set_defaults(fn=cmd_accept)
+    p = sub.add_parser('style', help='house-style issues (and bulk fixes)')
+    p.add_argument('files', nargs='+')
+    p.add_argument('--apply', choices=('mechanical', 'all'),
+                   help='write fixes: mechanical = nasal/final-m only; all = also split/avagraha/join')
+    p.add_argument('--rules', help='comma-separated subset: nasal,final-m,join,split,avagraha')
+    p.add_argument('--summary', action='store_true', help='counts only')
+    p.add_argument('--format', choices=('text', 'tsv'), default='text')
+    p.set_defaults(fn=cmd_style)
     p = sub.add_parser('serve', help='browser review UI')
     p.add_argument('files', nargs='+')
     p.add_argument('--host', default='127.0.0.1')
