@@ -198,7 +198,7 @@ def make_handler(rv):
 
             def fix():
                 replace_word(rv.path(b['path']), int(b['line']), b['word'],
-                             int(b.get('occ', 0)), b['replacement'], bool(b.get('join_next')))
+                             int(b.get('occ', 0)), b['replacement'], int(b.get('join_next') or 0))
                 return rv.payload(b['path'])
 
             def style_apply():

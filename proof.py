@@ -10,6 +10,8 @@
   proof.py approve FILE...           add proofread files to gold.txt, rebuild
   proof.py style FILE|DIR... [--apply mechanical|all]   house-style issues / bulk fixes
   proof.py dupes [FILES] [--scope gold|all]   same verse elsewhere with a different reading
+  proof.py edits [FILES] --out X.csv  proposed style edits to cherry-pick (approve column)
+  proof.py apply-edits X.csv         apply the approved rows
   proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
 """
 
@@ -169,6 +171,29 @@ def cmd_dupes(args):
           file=sys.stderr)
 
 
+def cmd_edits(args):
+    """Export house-style edits for a set of files (default: gold) as a CSV."""
+    from proofreader.edits import style_rows, write_csv
+    session = Session(meter=False)
+    files = expand_paths(args.files) if args.files else \
+        [os.path.join(root_dir(), p) for p in read_manifest()]
+    rows = []
+    for p in files:
+        rows += style_rows(session.style(p), p)
+    order = {'style-mechanical': 1, 'style-review': 2}
+    rows.sort(key=lambda r: (order.get(r['category'], 0), r['file'], int(r['line'])))
+    write_csv(rows, args.out)
+    print(f'{len(rows)} edit(s) -> {args.out}', file=sys.stderr)
+
+
+def cmd_apply_edits(args):
+    from proofreader.edits import apply_rows, read_csv
+    applied, failed = apply_rows(read_csv(args.csv))
+    print(f'applied {applied} edit(s)', file=sys.stderr)
+    for x in failed:
+        print('skipped: ' + x, file=sys.stderr)
+
+
 def cmd_serve(args):
     from proofreader.server import serve
     serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
@@ -287,6 +312,13 @@ def main():
     p.add_argument('--ignore', help='comma-separated path fragments to skip')
     p.add_argument('--format', choices=('text', 'tsv'), default='text')
     p.set_defaults(fn=cmd_dupes)
+    p = sub.add_parser('edits', help='export proposed house-style edits as a CSV to cherry-pick')
+    p.add_argument('files', nargs='*', help='default: the gold files')
+    p.add_argument('--out', default='edits.csv')
+    p.set_defaults(fn=cmd_edits)
+    p = sub.add_parser('apply-edits', help='apply the rows marked approve in an edits CSV')
+    p.add_argument('csv')
+    p.set_defaults(fn=cmd_apply_edits)
     p = sub.add_parser('serve', help='browser review UI')
     p.add_argument('files', nargs='+')
     p.add_argument('--host', default='127.0.0.1')

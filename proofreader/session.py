@@ -127,7 +127,7 @@ def replace_word(path, lineno, word, occ, replacement, join_next=False):
                          '(it may span two lines); edit the line instead')
     m = hits[occ]
     end = m.end()
-    if join_next:
+    for _ in range(int(join_next)):
         nxt = WORD_RE.search(line, end)
         if nxt is None or line[end:nxt.start()].strip():
             raise ValueError('no following word on the same line to join with')

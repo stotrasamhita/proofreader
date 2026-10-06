@@ -63,7 +63,7 @@ class StyleIssue:
     replacement: str           # replaces `word` (or `word` + next word if join)
     mechanical: bool
     note: str
-    join_next: bool = False
+    join_next: int = 0         # number of following words the replacement absorbs
 
 
 def fix_nasals(w):
@@ -224,10 +224,13 @@ def check_units(units, idx):
             toks = list(WORD_RE.finditer(line.text))
             seen = {}
             continued = line.text.rstrip().endswith('-')
+            absorbed = set()
             for t_i, m in enumerate(toks):
                 w = m.group(0)
                 occ = seen.get(w, 0)
                 seen[w] = occ + 1
+                if t_i in absorbed:
+                    continue
                 last = t_i == len(toks) - 1
                 # what follows the word on this line decides the final-m rule:
                 # a space + word (mid-phrase), a danda, or other punctuation
@@ -245,6 +248,19 @@ def check_units(units, idx):
                 r = word_issues(w, idx, danda, nxt)
                 if r:
                     rep, rules, notes, mech, join = r
+                    n_join = 0
+                    if join:
+                        # a chain अहम् अपि इदम् … joins into one edit
+                        n_join = 1
+                        absorbed.add(t_i + 1)
+                        k = t_i + 1
+                        while (rep.endswith('म्') and k + 1 < len(toks)
+                               and not line.text[toks[k].end():toks[k + 1].start()].strip()
+                               and _VOWEL_START.match(toks[k + 1].group(0))):
+                            rep = join_vowel(rep, toks[k + 1].group(0))
+                            k += 1
+                            n_join += 1
+                            absorbed.add(k)
                     out.append(StyleIssue(line.lineno, w, occ, '+'.join(rules), rep, mech,
-                                          '; '.join(notes), join))
+                                          '; '.join(notes), n_join))
     return out

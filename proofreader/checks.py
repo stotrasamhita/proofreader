@@ -72,7 +72,7 @@ class Finding:
     suggestion: str = ''
     context: str = ''
     occ: int = 0              # style: which occurrence of text on the line
-    join_next: bool = False   # style: replacement also consumes the next word
+    join_next: int = 0        # style: number of following words the replacement absorbs
     mechanical: bool = False  # style: safe to apply without review
 
 

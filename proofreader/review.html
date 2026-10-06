@@ -330,7 +330,7 @@ function fix(rep) {
   const f = doc.findings[sel];
   if (!rep || rep === f.text) return;
   act('/api/fix', { path: doc.path, line: f.line, word: f.text, occ: f.occ, replacement: rep,
-                    join_next: !!f.join_next }, `Replaced with ${rep}`);
+                    join_next: f.join_next || 0 }, `Replaced with ${rep}`);
 }
 function acceptWord() {
   const f = doc.findings[sel];
