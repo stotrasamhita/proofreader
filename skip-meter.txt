@@ -1,0 +1,3 @@
+# Files whose verses should not be metre-checked (globs relative to the
+# StotraSamhita root). Hindi/Awadhi verse scans differently from Sanskrit.
+stotra-sangrahah/stotras/hanuman/HanumanChalisa.tex

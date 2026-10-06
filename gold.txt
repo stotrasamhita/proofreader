@@ -1,0 +1,18 @@
+# Gold (proofread) corpus manifest.
+# One glob per line, relative to the StotraSamhita root (the parent of this
+# directory). Lines starting with '-' exclude matching files. The index is
+# rebuilt from exactly these files by `proof.py build`.
+
+stotra-sangrahah/stotras/**/*.tex
+Mahabharatam/parvas/04-virāṭaparva.tex
+AdhyatmaRamayanam/TeX/*.tex
+gita/gita.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/51-mohini.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/52-apara.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/53-nirjala.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/54-yogini.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/55-shayani.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/56-kamika.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/57-putrada.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/58-aja.tex
+puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/59-padma.tex

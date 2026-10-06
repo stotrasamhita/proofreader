@@ -1,0 +1,16 @@
+diff --git a/data/metrical_data.py b/data/metrical_data.py
+index 23bf0e4..394a2e3 100644
+--- a/data/metrical_data.py
++++ b/data/metrical_data.py
+@@ -85,7 +85,10 @@ def jsonToPy(filename):
+   assert data.keys() <= {'comment', 'metres'}
+   for metre_name, metre_value in data['metres']:
+     if isinstance(metre_value, dict):
+-      assert metre_value.keys() <= {'pattern', 'comment', 'instance'}, metre_value.keys()
++      # Regex-described metres (Anuṣṭup, Āryā family) are added in code instead.
++      if 'pattern' not in metre_value:
++        continue
++      assert metre_value.keys() <= {'pattern', 'comment', 'instance', 'video', 'videos', 'examples'}, metre_value.keys()
+       metre_value = metre_value['pattern']
+     if isinstance(metre_value, unicode) and metre_value.startswith('TODO'):
+       continue
