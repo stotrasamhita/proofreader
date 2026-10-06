@@ -6,8 +6,10 @@ gold corpus and the Virāṭa original→proofread diff):
   nasal     class nasal, not anusvara, before a stop inside a word
             (सम्प्राप्त, not संप्राप्त); संज्ञ keeps its anusvara
   nasal2    doubled nasal before म/न (सम्मत, सन्निधि; not संमत)
-  final-m   a word ending a line that carries a danda (। or ॥) ends in म्;
-            elsewhere a final m is written ं
+  final-m   a word before a danda (। or ॥) ends in म्; at the end of an odd
+            pāda of a four-line verse (no danda) it is म् only if the next
+            pāda starts with a vowel, else ं; inside a line, ं before a
+            consonant. म् + vowel inside a line stays apart (never joined).
   split     a consonant-final word is written apart from the next word
             (तत् सर्वं); sandhi-changed junctions (वाञ्जनो) and compounds
             known to gold stay joined
@@ -190,18 +192,19 @@ def word_issues(w, idx, danda=None, nxt=None, allow_join=True):
     if danda is True and cur.endswith('ं'):
         rules.append('final-m'); notes.append('line ends with a danda: final म्')
         cur = cur[:-1] + 'म्'
-    elif danda is False and cur.endswith('म्'):
-        rules.append('final-m'); notes.append('pāda without a danda: final m is written ं')
-        cur = cur[:-2] + 'ं'
-    elif danda is None and cur.endswith('म्') and nxt:
-        if not allow_join and _VOWEL_START.match(nxt):
-            pass                 # prose (titles, saṅkalpa) keeps म् + vowel apart
-        elif _VOWEL_START.match(nxt):
-            rules.append('join'); notes.append(f'final म् before a vowel: join with {nxt}')
-            cur, join = join_vowel(cur, nxt), True
-        else:
-            rules.append('final-m'); notes.append('final m inside a line is written ं')
+    elif danda is False:
+        # odd pāda of a four-line verse: म् only before a vowel-initial pāda
+        vowel_next = bool(nxt and _VOWEL_START.match(nxt))
+        if cur.endswith('म्') and not vowel_next:
+            rules.append('final-m'); notes.append('next pāda starts with a consonant: final ं')
             cur = cur[:-2] + 'ं'
+        elif cur.endswith('ं') and vowel_next:
+            rules.append('final-m'); notes.append('next pāda starts with a vowel: final म्')
+            cur = cur[:-1] + 'म्'
+    elif danda is None and cur.endswith('म्') and nxt and not _VOWEL_START.match(nxt):
+        rules.append('final-m'); notes.append('final m before a consonant inside a line is written ं')
+        cur = cur[:-2] + 'ं'
+    # म् + vowel inside a line stays apart (house style: never join)
 
     if not join and not _MARKS_RE.search(cur):   # vocabulary rules need plain text
         sp = split_word(cur, idx)
@@ -249,6 +252,9 @@ def check_units(units, idx):
                         danda = 'skip'           # dash, bracket, comma: leave as written
                 elif u.kind == 'verse' and not continued:
                     danda = line_has_danda(u.macro, j, n)
+                    if danda is False and j + 1 < n:       # first word of the next pāda
+                        nt = WORD_RE.search(u.lines[j + 1].text)
+                        nxt = nt.group(0) if nt else None
                 r = word_issues(w, idx, danda, nxt, allow_join=u.kind == 'verse')
                 if r:
                     rep, rules, notes, mech, join = r

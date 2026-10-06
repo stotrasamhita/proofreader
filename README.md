@@ -57,8 +57,7 @@ Rules, measured on the gold texts and the Virāṭa original→proofread diff:
 | rule | convention | kind |
 |---|---|---|
 | nasal | class nasal before a stop (सम्प्राप्त), doubled before म/न (सम्मत); संज्ञ kept | mechanical |
-| final-m | `म्` before a danda (line end with ।/॥), `ं` elsewhere | mechanical |
-| join | `म्` + vowel inside a line is joined (अहमपि) | review |
+| final-m | `म्` before a danda (।/॥); at an odd pāda end without a danda, `म्` only if the next pāda starts with a vowel, else `ं`; inside a line `ं` before a consonant, and `म्` + vowel stays apart (never joined) | mechanical |
 | split | consonant-final word written apart (तत् सर्वं); assimilated sandhi (वाञ्जनो, अकस्मान्मां) and gold compounds stay joined | review |
 | avagraha | elided अ marked (सोऽहं); spelt as gold spells it (वाऽपि) | review |
 
