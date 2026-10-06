@@ -19,6 +19,31 @@ directories (`../stotra-sangrahah`, `../Mahabharatam`, `../verse-checker`, …).
 ./proof.py approve ../puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/40-utpanna.tex
 ```
 
+## Review in the browser
+
+```sh
+./proof.py serve ../puja-vidhanam/kathas/ekadashi        # then open http://127.0.0.1:8765/
+# on a remote machine:  ssh -L 8765:localhost:8765 <host>
+```
+
+The page shows each file's text with flagged words highlighted (red ≥ 10,
+amber ≥ 6, violet below) and metre-flagged verses edged in orange. Click a flag,
+or step through flags with `j`/`k`, and then:
+
+- **Apply** the suggestion (`Enter`) or type a replacement. This edits that
+  one word in the source file.
+- **Edit line** (`e`) to change the raw TeX source line, e.g. to split a word
+  or fix a word that spans two lines.
+- **Accept** (`a`) a valid word or verse. It goes to `accepted.txt` and is
+  never flagged again, in any file.
+- **Approve as gold** when the file is done. It is added to `gold.txt` and the
+  index is rebuilt.
+- **Diff** shows your uncommitted edits to the file (`git diff`).
+
+The min-score slider and "flagged only" filter the view. `#path:line` in the
+URL opens a file at a line. Edits go straight to the working tree of each
+repo; review with the Diff button or `git diff`, then commit as usual.
+
 ## Files
 
 | File | Purpose |
@@ -27,6 +52,7 @@ directories (`../stotra-sangrahah`, `../Mahabharatam`, `../verse-checker`, …).
 | `accepted.txt` | Words and verses marked correct, so they are never flagged again. |
 | `skip-meter.txt` | Files whose verses are not metre-checked (e.g. Awadhi). |
 | `index/` | Generated: gold index and metre cache. Rebuild with `build`. |
+| `patches/verse-checker-py3.patch` | Two Python 3 fixes to `../verse-checker`; apply with `git -C ../verse-checker apply ../proofreader/patches/verse-checker-py3.patch`. |
 
 ## How a word is scored
 

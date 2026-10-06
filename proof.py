@@ -8,6 +8,7 @@
   proof.py accept WORD...            mark words as valid (never flag again)
   proof.py accept --verse 'FIRST LINE'  mark a verse's metre as valid
   proof.py approve FILE...           add proofread files to gold.txt, rebuild
+  proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
 """
 
 import argparse
@@ -18,42 +19,11 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from proofreader.checks import REPORT_THRESHOLD, DocContext, check_file, score_word, verse_ok  # noqa: E402
-from proofreader.index import Index, read_manifest, rel, root_dir, tool_dir  # noqa: E402
+from proofreader.checks import REPORT_THRESHOLD, DocContext, score_word, verse_ok  # noqa: E402
+from proofreader.index import Index, read_manifest, rel, root_dir  # noqa: E402
+from proofreader.session import (Session, add_accepted, approve, expand_paths,  # noqa: E402
+                                 load_accepted)
 from proofreader.text import key, parse_file  # noqa: E402
-
-ACCEPTED = os.path.join(tool_dir(), 'accepted.txt')
-
-
-SKIP_METER = os.path.join(tool_dir(), 'skip-meter.txt')
-
-
-def load_accepted():
-    """Words (by key) and verses ('meter: <first line>') marked as correct."""
-    out = set()
-    if os.path.exists(ACCEPTED):
-        with open(ACCEPTED, encoding='utf-8') as f:
-            for l in f:
-                l = l.split('#', 1)[0].strip()
-                if l.startswith('meter:'):
-                    out.add(verse_id([l[len('meter:'):]]))
-                elif l:
-                    out.add(key(l))
-    return frozenset(out)
-
-
-def skip_meter_files():
-    if not os.path.exists(SKIP_METER):
-        return set()
-    import glob
-    out = set()
-    with open(SKIP_METER, encoding='utf-8') as f:
-        for l in f:
-            l = l.split('#', 1)[0].strip()
-            if l:
-                out |= {rel(p) for p in glob.glob(os.path.join(root_dir(), l), recursive=True)}
-    return out
-
 
 def get_meter(args):
     if args.no_meter:
@@ -88,26 +58,16 @@ def summarize(findings, nfiles):
           + (f', {c["style"]} style notes' if c['style'] else ''), file=sys.stderr)
 
 
-def run_checks(paths, args, exclude_self=True):
-    idx = Index.load()
-    stale = set(idx.stale_files())
-    meter = get_meter(args)
-    accepted = load_accepted()
-    no_meter = skip_meter_files()
+def run_checks(paths, args):
+    session = Session(meter=not args.no_meter)
+    stale = set(session.idx.stale_files())
     findings = []
     for p in paths:
-        rp = rel(p)
-        if rp in stale:
-            print(f'warning: {rp} changed since the index was built; '
+        if rel(p) in stale:
+            print(f'warning: {rel(p)} changed since the index was built; '
                   'run `proof.py build`', file=sys.stderr)
-        removed = idx.without([rp]) if exclude_self else []
-        try:
-            findings += check_file(p, idx, None if rp in no_meter else meter, accepted, rp,
-                                   args.threshold, args.style)
-        finally:
-            idx.restore(removed)
-    if meter:
-        meter.save_cache()
+        findings += session.check(p, args.threshold, args.style)
+    session.close()
     return findings
 
 
@@ -117,14 +77,7 @@ def cmd_build(args):
 
 
 def cmd_check(args):
-    files = []
-    for p in args.files:
-        if os.path.isdir(p):
-            for d, _, fs in os.walk(p):
-                files += [os.path.join(d, f) for f in sorted(fs)
-                          if f.endswith(('.tex', '.txt', '.md'))]
-        else:
-            files.append(p)
+    files = expand_paths(args.files)
     findings = run_checks(files, args)
     print_findings(findings, args.format, args.sort)
     summarize(findings, len(files))
@@ -138,25 +91,19 @@ def cmd_selfcheck(args):
 
 
 def cmd_accept(args):
-    with open(ACCEPTED, 'a', encoding='utf-8') as f:
-        for w in args.words:
-            entry = f'meter: {w}' if args.verse else w
-            f.write(entry + (f'  # {args.note}' if args.note else '') + '\n')
+    add_accepted([f'meter: {w}' if args.verse else w for w in args.words], args.note)
     print(f'accepted {len(args.words)} ' + ('verse(s)' if args.verse else 'word(s)'))
 
 
 def cmd_approve(args):
-    path = os.path.join(tool_dir(), 'gold.txt')
-    have = set(read_manifest())
-    with open(path, 'a', encoding='utf-8') as f:
-        for p in args.files:
-            rp = rel(p)
-            if rp in have:
-                print(f'already gold: {rp}')
-                continue
-            f.write(rp + '\n')
-            print(f'approved: {rp}')
+    for rp in approve(args.files):
+        print(f'approved: {rp}')
     cmd_build(args)
+
+
+def cmd_serve(args):
+    from proofreader.server import serve
+    serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
 
 
 def cmd_eval(args):
@@ -257,6 +204,12 @@ def main():
                    help="each argument is a verse's first line; accept its metre")
     p.add_argument('--note', default='')
     p.set_defaults(fn=cmd_accept)
+    p = sub.add_parser('serve', help='browser review UI')
+    p.add_argument('files', nargs='+')
+    p.add_argument('--host', default='127.0.0.1')
+    p.add_argument('--port', type=int, default=8765)
+    p.add_argument('--no-meter', action='store_true')
+    p.set_defaults(fn=cmd_serve)
     p = sub.add_parser('approve')
     p.add_argument('files', nargs='+')
     p.set_defaults(fn=cmd_approve)

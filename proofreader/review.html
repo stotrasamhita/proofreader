@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="sa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proofreader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #f7f6f2; --panel: #ffffff; --ink: #1f1d1a; --muted: #6b665d; --line: #e4e0d6;
+  --accent: #8a4b14; --accent-ink: #ffffff;
+  --hi: #f6c7bf; --hi-ink: #7a1d0f; --mid: #f7e0a8; --mid-ink: #6a4a00; --lo: #e6e3f5; --lo-ink: #3b3480;
+  --meter: #c2410c; --ok: #2f6b3a; --sel: #1f1d1a;
+  --deva: "Noto Serif Devanagari", "Sanskrit 2003", "Siddhanta", serif;
+  --ui: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171614; --panel: #201f1c; --ink: #ece8df; --muted: #a39d91; --line: #34312c;
+    --accent: #e0a46a; --accent-ink: #1a1208;
+    --hi: #5c2219; --hi-ink: #ffd5cc; --mid: #4d3c10; --mid-ink: #ffe6a3; --lo: #2c2950; --lo-ink: #d6d2ff;
+    --meter: #fb923c; --ok: #7fc28b; --sel: #ece8df;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171614; --panel: #201f1c; --ink: #ece8df; --muted: #a39d91; --line: #34312c;
+  --accent: #e0a46a; --accent-ink: #1a1208;
+  --hi: #5c2219; --hi-ink: #ffd5cc; --mid: #4d3c10; --mid-ink: #ffe6a3; --lo: #2c2950; --lo-ink: #d6d2ff;
+  --meter: #fb923c; --ok: #7fc28b; --sel: #ece8df;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--ui); display: grid; height: 100vh;
+  grid-template-columns: 290px 1fr 360px; grid-template-rows: minmax(0, 1fr); }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px;
+  padding: 5px 10px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+kbd { font: 11px var(--ui); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px;
+  padding: 0 4px; color: var(--muted); }
+
+/* sidebar */
+#side { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+#side header { padding: 14px 14px 8px; }
+#side h1 { font-size: 15px; margin: 0 0 8px; }
+#filter { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: var(--ink); }
+#files { overflow: auto; flex: 1; padding: 4px 6px 16px; }
+.dir { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  padding: 10px 8px 2px; word-break: break-all; }
+.file { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left;
+  border: 0; background: none; color: var(--ink); padding: 4px 8px; border-radius: 5px; }
+.file:hover { background: var(--line); }
+.file.on { background: var(--ink); color: var(--bg); }
+.file .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.file.on .count { color: inherit; }
+.gold { color: var(--ok); font-size: 11px; }
+
+/* main */
+#main { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 18px;
+  border-bottom: 1px solid var(--line); background: var(--panel); }
+#bar .path { font-weight: 600; word-break: break-all; }
+.badge { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.badge.gold { color: var(--ok); border-color: var(--ok); }
+.badge.mod { color: var(--meter); border-color: var(--meter); }
+#bar label { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+#bar .spacer { flex: 1; }
+#text { overflow: auto; flex: 1; padding: 18px 28px 80px; }
+.empty { color: var(--muted); padding: 40px; text-align: center; }
+.unit { margin: 0 0 14px; padding: 2px 0 2px 12px; border-left: 3px solid transparent; }
+.unit.verse .content { font-size: 19px; }
+.unit.prose .content { font-size: 17px; color: var(--muted); }
+.unit.mflag { border-left-color: var(--meter); cursor: pointer; }
+.unit.mflag.sel { background: color-mix(in srgb, var(--meter) 10%, transparent); }
+.line { display: grid; grid-template-columns: 46px 1fr; align-items: baseline; }
+.ln { color: var(--muted); font: 11px var(--ui); text-align: right; padding-right: 12px; user-select: none; }
+.content { font-family: var(--deva); line-height: 1.9; }
+.mnote { font: 12px var(--ui); color: var(--meter); margin: 2px 0 0 46px; }
+.gap { color: var(--muted); font-size: 12px; margin: 0 0 14px 58px; }
+.flag { font: inherit; border: 0; padding: 0 2px; border-radius: 4px; }
+.flag.hi { background: var(--hi); color: var(--hi-ink); }
+.flag.mid { background: var(--mid); color: var(--mid-ink); }
+.flag.lo { background: var(--lo); color: var(--lo-ink); }
+.flag.sel { outline: 2px solid var(--sel); outline-offset: 1px; }
+
+/* detail */
+#detail { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 16px; }
+#detail h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+.word { font: 600 26px/1.5 var(--deva); word-break: break-all; }
+.meta { color: var(--muted); font-size: 12px; margin: 2px 0 12px; }
+.reasons { margin: 0 0 14px; padding-left: 18px; color: var(--ink); }
+.reasons li { margin: 3px 0; font-family: var(--deva), var(--ui); font-size: 13px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.sugg { font-family: var(--deva); font-size: 16px; }
+#repl, #lineedit { width: 100%; font: 17px/1.6 var(--deva); padding: 6px 8px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--bg); color: var(--ink); }
+#lineedit { min-height: 90px; font-size: 15px; }
+.pat { font: 12px/1.6 ui-monospace, monospace; white-space: pre; overflow-x: auto; background: var(--bg);
+  padding: 8px; border-radius: 6px; }
+.help { color: var(--muted); font-size: 12px; margin-top: 18px; line-height: 1.9; }
+#toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink);
+  color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; }
+#diffbox { position: fixed; inset: 6vh 8vw; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; display: none; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+#diffbox.show { display: flex; }
+#diffbox header { display: flex; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+#diffbox pre { margin: 0; overflow: auto; padding: 14px; font: 13px/1.6 ui-monospace, monospace; flex: 1; }
+.add { color: var(--ok); } .del { color: var(--meter); }
+
+@media (max-width: 1100px) {
+  body { grid-template-columns: 240px 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  #detail { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); max-height: 45vh; }
+}
+@media (max-width: 700px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; }
+  #side { max-height: 30vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  #text { padding: 14px 16px 60px; }
+  .line { grid-template-columns: 34px 1fr; }
+}
+</style>
+</head>
+<body>
+<aside id="side">
+  <header>
+    <h1>Proofreader</h1>
+    <input id="filter" placeholder="Filter files…" autocomplete="off">
+  </header>
+  <div id="files"></div>
+</aside>
+
+<main id="main">
+  <div id="bar">
+    <span class="path" id="fpath">Choose a file</span>
+    <span id="badges"></span>
+    <span class="spacer"></span>
+    <label>Min score <input type="range" id="thr" min="2" max="15" step="1"> <b id="thrv"></b></label>
+    <label><input type="checkbox" id="only"> Flagged only</label>
+    <button class="btn" id="diffbtn" disabled>Diff</button>
+    <button class="btn" id="approvebtn" disabled>Approve as gold</button>
+  </div>
+  <div id="text"><div class="empty">Pick a file on the left. Files are checked in the background; counts appear as they finish.</div></div>
+</main>
+
+<aside id="detail"><div class="empty">Click a highlighted word or a verse with an orange edge.</div></aside>
+
+<div id="diffbox"><header><b>Uncommitted changes</b><button class="btn" id="diffclose">Close</button></header><pre id="diffpre"></pre></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+let files = [], doc = null, sel = null, thr = store.get('thr', 5), only = store.get('only', false);
+$('#thr').value = thr; $('#thrv').textContent = thr; $('#only').checked = only;
+
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', headers: {'Content-Type': 'application/json'},
+                                       body: JSON.stringify(body) } : {});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2200); }
+const level = s => s >= 10 ? 'hi' : s >= 6 ? 'mid' : 'lo';
+const visible = f => f.score >= thr && f.kind !== 'style';
+
+// ---- file list -------------------------------------------------------------
+async function loadFiles() {
+  files = (await api('/api/files')).files;
+  renderFiles();
+  if (files.some(f => !f.ready)) setTimeout(loadFiles, 2500);
+}
+function renderFiles() {
+  const q = $('#filter').value.toLowerCase();
+  let html = '', dir = null;
+  for (const f of files) {
+    if (q && !f.path.toLowerCase().includes(q)) continue;
+    const i = f.path.lastIndexOf('/'), d = f.path.slice(0, i), n = f.path.slice(i + 1);
+    if (d !== dir) { html += `<div class="dir">${esc(d)}</div>`; dir = d; }
+    const c = f.ready ? f.scores.filter(s => s >= thr).length : '…';
+    html += `<button class="file${doc && doc.path === f.path ? ' on' : ''}" data-p="${esc(f.path)}">
+      <span class="name">${esc(n)} ${f.gold ? '<span class="gold">✓</span>' : ''}</span><span class="count">${c}</span></button>`;
+  }
+  $('#files').innerHTML = html || '<div class="empty">No files match.</div>';
+}
+$('#files').addEventListener('click', e => { const b = e.target.closest('.file'); if (b) openFile(b.dataset.p); });
+$('#filter').addEventListener('input', renderFiles);
+
+// ---- document --------------------------------------------------------------
+async function openFile(p, keepSel) {
+  $('#text').innerHTML = '<div class="empty">Checking…</div>';
+  try { setDoc(await api('/api/file?path=' + encodeURIComponent(p)), keepSel); }
+  catch (e) { $('#text').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  store.set('last', p);
+  history.replaceState(null, '', '#' + encodeURIComponent(p));
+}
+function setDoc(d, keepSel) {
+  const prevLine = keepSel && sel != null && doc ? doc.findings[sel].line : null;
+  doc = d; sel = null;
+  const fi = files.find(f => f.path === d.path);
+  if (fi) { fi.ready = true; fi.scores = d.findings.map(f => f.score); fi.gold = d.gold; }
+  renderFiles(); renderDoc();
+  if (prevLine != null) { const n = order().find(f => f.line >= prevLine); if (n) select(n.id); }
+  else renderDetail();
+}
+function order() {    // navigation order: document order of visible findings
+  return doc.findings.filter(visible).sort((a, b) => a.line - b.line || (a.kind === 'meter') - (b.kind === 'meter'));
+}
+function renderDoc() {
+  $('#fpath').textContent = doc.path;
+  $('#badges').innerHTML = (doc.gold ? '<span class="badge gold">gold</span> ' : '') +
+                           (doc.modified ? '<span class="badge mod">modified</span>' : '');
+  $('#diffbtn').disabled = !doc.modified;
+  $('#approvebtn').disabled = doc.gold;
+  const vis = order();
+  let html = '', skipped = 0;
+  for (const u of doc.units) {
+    const mf = u.meter != null && visible(doc.findings[u.meter]) ? doc.findings[u.meter] : null;
+    const has = mf || u.lines.some(l => l.segs.some(s => s[1] >= 0 && visible(doc.findings[s[1]])));
+    if (only && !has) { skipped += u.lines.length; continue; }
+    if (skipped) { html += `<div class="gap">… ${skipped} line(s) without flags</div>`; skipped = 0; }
+    html += `<div class="unit ${u.kind}${mf ? ' mflag' : ''}" ${mf ? `data-id="${mf.id}"` : ''}>`;
+    for (const l of u.lines) {
+      html += `<div class="line"><span class="ln">${l.n}</span><span class="content">`;
+      for (const [t, id] of l.segs) {
+        const f = id >= 0 ? doc.findings[id] : null;
+        html += f && visible(f) ? `<button class="flag ${level(f.score)}" data-id="${id}">${esc(t)}</button>` : esc(t);
+      }
+      html += '</span></div>';
+    }
+    if (mf) html += `<div class="mnote">${esc(mf.reasons[0])}</div>`;
+    html += '</div>';
+  }
+  if (skipped) html += `<div class="gap">… ${skipped} line(s) without flags</div>`;
+  $('#text').innerHTML = html || '<div class="empty">Nothing to show.</div>';
+  $('#text').scrollTop = 0;
+  if (!vis.length) $('#detail').innerHTML = `<div class="empty">No flags at score ≥ ${thr}. ${doc.gold ? '' : 'If the text is done, approve it as gold.'}</div>`;
+}
+$('#text').addEventListener('click', e => {
+  const t = e.target.closest('.flag') || e.target.closest('.unit.mflag');
+  if (t) select(+t.dataset.id);
+});
+
+// ---- selection & actions ----------------------------------------------------
+function select(id) {
+  sel = id;
+  document.querySelectorAll('.sel').forEach(x => x.classList.remove('sel'));
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) { el.classList.add('sel'); el.scrollIntoView({ block: 'center' }); }
+  renderDetail();
+}
+function step(d) {
+  const o = order(); if (!o.length) return;
+  const i = o.findIndex(f => f.id === sel);
+  select(o[i < 0 ? (d > 0 ? 0 : o.length - 1) : (i + d + o.length) % o.length].id);
+}
+function renderDetail() {
+  if (sel == null) { if (doc) $('#detail').innerHTML = `<div class="empty">${order().length} flag(s) at score ≥ ${thr}. Press <kbd>j</kbd> to start.</div>`; return; }
+  const f = doc.findings[sel], o = order(), pos = o.findIndex(x => x.id === sel) + 1;
+  const fixable = f.kind === 'word' && f.occ != null && !f.spans_lines;
+  let h = `<h2>${f.kind === 'meter' ? 'Metre' : 'Word'} · ${pos} of ${o.length}</h2>`;
+  if (f.kind === 'word') {
+    h += `<div class="word">${esc(f.text)}</div><div class="meta">line ${f.line} · score ${f.score}</div>
+      <ul class="reasons">${f.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`;
+    if (f.suggestion && fixable)
+      h += `<div class="row"><button class="btn primary" id="apply">Apply <span class="sugg">${esc(f.suggestion)}</span> <kbd>Enter</kbd></button></div>`;
+    h += `<div class="row"><input id="repl" value="${esc(f.suggestion || f.text)}" ${fixable ? '' : 'disabled'}></div>
+      <div class="row"><button class="btn" id="replbtn" ${fixable ? '' : 'disabled'}>Replace word</button>
+      <button class="btn" id="accept">Accept word <kbd>a</kbd></button>
+      <button class="btn" id="editbtn">Edit line <kbd>e</kbd></button>
+      <button class="btn" id="next">Skip <kbd>j</kbd></button></div>`;
+    if (!fixable) h += `<div class="meta">This word spans two source lines; use Edit line.</div>`;
+  } else {
+    const pats = (f.reasons.find(r => r.startsWith('pattern:')) || '').slice(9).split(' | ');
+    h += `<div class="meta">line ${f.line} · score ${f.score}</div>
+      <ul class="reasons"><li>${esc(f.reasons[0])}</li></ul>
+      <div class="pat">${pats.map((p, i) => `${i + 1}  ${esc(p)}`).join('\n')}</div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="acceptv">Accept verse <kbd>a</kbd></button>
+      <button class="btn" id="editbtn">Edit line <kbd>e</kbd></button>
+      <button class="btn" id="next">Skip <kbd>j</kbd></button></div>`;
+  }
+  h += `<div id="editor"></div><div class="help"><kbd>j</kbd>/<kbd>k</kbd> next/previous · <kbd>Enter</kbd> apply suggestion ·
+    <kbd>a</kbd> accept · <kbd>e</kbd> edit source line · <kbd>Esc</kbd> close editor</div>`;
+  $('#detail').innerHTML = h;
+  const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
+  on('apply', () => fix(f.suggestion)); on('replbtn', () => fix($('#repl').value.trim()));
+  on('accept', acceptWord); on('acceptv', acceptVerse); on('editbtn', editLine); on('next', () => step(1));
+}
+async function act(path, body, msg) {
+  try { setDoc(await api(path, body), true); toast(msg); } catch (e) { toast('⚠ ' + e.message); }
+}
+function fix(rep) {
+  const f = doc.findings[sel];
+  if (!rep || rep === f.text) return;
+  act('/api/fix', { path: doc.path, line: f.line, word: f.text, occ: f.occ, replacement: rep }, `Replaced with ${rep}`);
+}
+function acceptWord() {
+  const f = doc.findings[sel];
+  act('/api/accept', { path: doc.path, word: f.text }, `Accepted ${f.text}`);
+}
+function acceptVerse() {
+  const f = doc.findings[sel];
+  act('/api/accept', { path: doc.path, verse: f.text.split(' / ')[0] }, 'Verse accepted');
+}
+async function editLine() {
+  const f = doc.findings[sel];
+  const u = doc.units.find(u => u.lines.some(l => l.n === f.line));
+  const nums = f.kind === 'meter' && u ? u.lines.map(l => l.n) : [f.line];
+  const ed = $('#editor');
+  ed.innerHTML = `<h2 style="margin-top:16px">Edit source line</h2>
+    ${nums.length > 1 ? `<div class="row"><select id="lnsel" class="btn">${nums.map(n => `<option>${n}</option>`).join('')}</select></div>` : ''}
+    <textarea id="lineedit"></textarea><div class="row"><button class="btn primary" id="savel">Save line</button>
+    <button class="btn" id="cancell">Cancel</button></div>`;
+  const load = async n => { $('#lineedit').value = (await api(`/api/line?path=${encodeURIComponent(doc.path)}&line=${n}`)).text; $('#lineedit').focus(); };
+  const cur = () => nums.length > 1 ? +$('#lnsel').value : nums[0];
+  if (nums.length > 1) $('#lnsel').onchange = () => load(cur());
+  await load(cur());
+  $('#savel').onclick = () => act('/api/edit-line', { path: doc.path, line: cur(), text: $('#lineedit').value }, `Saved line ${cur()}`);
+  $('#cancell').onclick = () => { ed.innerHTML = ''; };
+}
+
+// ---- toolbar ---------------------------------------------------------------
+$('#thr').addEventListener('input', e => { thr = +e.target.value; $('#thrv').textContent = thr; store.set('thr', thr);
+  renderFiles(); if (doc) { sel = null; renderDoc(); renderDetail(); } });
+$('#only').addEventListener('change', e => { only = e.target.checked; store.set('only', only); if (doc) { renderDoc(); if (sel != null) select(sel); } });
+$('#approvebtn').addEventListener('click', () => {
+  if (confirm(`Add ${doc.path} to the gold corpus? The index is rebuilt (a few seconds).`))
+    act('/api/approve', { path: doc.path }, 'Approved; index rebuilt');
+});
+$('#diffbtn').addEventListener('click', async () => {
+  const d = (await api('/api/diff?path=' + encodeURIComponent(doc.path))).diff;
+  $('#diffpre').innerHTML = d.split('\n').map(l => l.startsWith('+') && !l.startsWith('+++') ? `<span class="add">${esc(l)}</span>`
+    : l.startsWith('-') && !l.startsWith('---') ? `<span class="del">${esc(l)}</span>` : esc(l)).join('\n');
+  $('#diffbox').classList.add('show');
+});
+$('#diffclose').onclick = () => $('#diffbox').classList.remove('show');
+
+document.addEventListener('keydown', e => {
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if (e.key === 'Escape') { $('#diffbox').classList.remove('show'); const ed = $('#editor'); if (ed) ed.innerHTML = ''; document.activeElement.blur(); return; }
+  if (typing || !doc) return;
+  const f = sel != null ? doc.findings[sel] : null;
+  if (e.key === 'j' || e.key === 'n') step(1);
+  else if (e.key === 'k' || e.key === 'p') step(-1);
+  else if (e.key === 'Enter' && f && f.suggestion && f.kind === 'word' && f.occ != null && !f.spans_lines) fix(f.suggestion);
+  else if (e.key === 'a' && f) f.kind === 'meter' ? acceptVerse() : acceptWord();
+  else if (e.key === 'e' && f) { e.preventDefault(); editLine(); }
+  else return;
+  e.preventDefault();
+});
+
+// #path or #path:line opens a file (and the first flag at/after line)
+loadFiles().then(async () => {
+  const m = decodeURIComponent(location.hash.slice(1)).match(/^(.*?)(?::(\d+))?$/);
+  const want = m && m[1] && files.some(f => f.path === m[1]) ? m[1] : store.get('last');
+  if (!want || !files.some(f => f.path === want)) return;
+  await openFile(want);
+  if (m && m[2]) { const n = order().find(f => f.line >= +m[2]); if (n) select(n.id); }
+});
+</script>
+</body>
+</html>

@@ -87,7 +87,7 @@ def anushtup_line_ok(p):
 def anushtup_like(patterns):
     """Lines are 16-syllable half-verses, give or take the one being wrong."""
     return (bool(patterns) and all(15 <= len(p) <= 17 for p in patterns)
-            and sum(len(p) == 16 for p in patterns) * 2 > len(patterns))
+            and sum(len(p) == 16 for p in patterns) * 2 >= len(patterns))
 
 
 def _matras(p):
