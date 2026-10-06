@@ -44,6 +44,42 @@ The min-score slider and "flagged only" filter the view. `#path:line` in the
 URL opens a file at a line. Edits go straight to the working tree of each
 repo; review with the Diff button or `git diff`, then commit as usual.
 
+## House style
+
+```sh
+./proof.py style ../stotra-sangrahah/stotras --summary        # counts per rule
+./proof.py style FILE.tex                                      # list issues
+./proof.py style FILE.tex --apply mechanical                   # write nasal/final-m fixes
+```
+
+Rules, measured on the gold texts and the Virāṭa original→proofread diff:
+
+| rule | convention | kind |
+|---|---|---|
+| nasal | class nasal before a stop (सम्प्राप्त), doubled before म/न (सम्मत); संज्ञ kept | mechanical |
+| final-m | `म्` before a danda (line end with ।/॥), `ं` elsewhere | mechanical |
+| join | `म्` + vowel inside a line is joined (अहमपि) | review |
+| split | consonant-final word written apart (तत् सर्वं); assimilated sandhi (वाञ्जनो, अकस्मान्मां) and gold compounds stay joined | review |
+| avagraha | elided अ marked (सोऽहं); spelt as gold spells it (वाऽपि) | review |
+
+On the Virāṭa diff, split flags match the editor 85% of the time and
+avagraha 95%. The review page has a *House style* mode with an
+"Apply all mechanical" button.
+
+## Same verse, different readings
+
+```sh
+./proof.py dupes                     # pairs involving a gold file
+./proof.py dupes --scope all --format tsv > dupes.tsv
+```
+
+Lines are compared after normalizing spaces, anusvara/nasal, avagraha and
+pāda-end sandhi, so only substantive differences remain. A verse pair needs two
+matching lines, so shared stock half-lines don't count. Derived copies
+(`gita/words`, `stotras-pdf`, `-orig` files) are skipped. A difference between
+a gold text and a non-gold one usually points at an error in the non-gold text.
+Between two gold texts it is an error or a variant reading to decide on.
+
 ## Files
 
 | File | Purpose |

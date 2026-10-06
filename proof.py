@@ -9,6 +9,7 @@
   proof.py accept --verse 'FIRST LINE'  mark a verse's metre as valid
   proof.py approve FILE...           add proofread files to gold.txt, rebuild
   proof.py style FILE|DIR... [--apply mechanical|all]   house-style issues / bulk fixes
+  proof.py dupes [FILES] [--scope gold|all]   same verse elsewhere with a different reading
   proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
 """
 
@@ -135,6 +136,39 @@ def cmd_style(args):
         print('could not apply: ' + x, file=sys.stderr)
 
 
+def cmd_dupes(args):
+    """The same verse in two places with different readings."""
+    from proofreader.dupes import corpus_files, find, word_diff
+    gold = set(read_manifest())
+    files = expand_paths(args.files) if args.files else corpus_files(root_dir())
+    files = [os.path.abspath(f) for f in files]
+    log = (lambda m: print(m, file=sys.stderr))
+    vps = find(files, rel, log=log)
+    if args.scope == 'gold':
+        vps = [v for v in vps if v.a_path in gold or v.b_path in gold]
+    if args.ignore:
+        pats = args.ignore.split(',')
+        vps = [v for v in vps if not any(p in v.a_path or p in v.b_path for p in pats)]
+    tag = lambda p: 'gold' if p in gold else '    '
+    if args.format == 'tsv':
+        print('a_path\ta_line\ta_gold\tb_path\tb_line\tb_gold\ta_text\tb_text')
+    for v in vps:
+        if args.format == 'tsv':
+            for a, b, r in v.differing:
+                print('\t'.join([a.path, str(a.lineno), tag(a.path).strip(), b.path, str(b.lineno),
+                                 tag(b.path).strip(), a.text, b.text]))
+            continue
+        a0, b0 = v.lines[0][0], v.lines[0][1]
+        print(f'[{tag(v.a_path)}] {v.a_path}:{a0.lineno}\n[{tag(v.b_path)}] {v.b_path}:{b0.lineno}')
+        for a, b, r in v.differing:
+            x, y = word_diff(a.text, b.text)
+            print(f'    {a.lineno:>6}  {x}\n    {b.lineno:>6}  {y}')
+        print()
+    n_gold = sum(v.a_path in gold and v.b_path in gold for v in vps)
+    print(f'{len(vps)} verse pair(s) with differing readings ({n_gold} between two gold files)',
+          file=sys.stderr)
+
+
 def cmd_serve(args):
     from proofreader.server import serve
     serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
@@ -246,6 +280,13 @@ def main():
     p.add_argument('--summary', action='store_true', help='counts only')
     p.add_argument('--format', choices=('text', 'tsv'), default='text')
     p.set_defaults(fn=cmd_style)
+    p = sub.add_parser('dupes', help='same verse, different readings')
+    p.add_argument('files', nargs='*', help='default: every .tex in the StotraSamhita repos')
+    p.add_argument('--scope', choices=('gold', 'all'), default='gold',
+                   help='gold: only pairs involving a gold file (default)')
+    p.add_argument('--ignore', help='comma-separated path fragments to skip')
+    p.add_argument('--format', choices=('text', 'tsv'), default='text')
+    p.set_defaults(fn=cmd_dupes)
     p = sub.add_parser('serve', help='browser review UI')
     p.add_argument('files', nargs='+')
     p.add_argument('--host', default='127.0.0.1')
