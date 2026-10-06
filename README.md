@@ -65,6 +65,20 @@ On the Virāṭa diff, split flags match the editor 85% of the time and
 avagraha 95%. The review page has a *House style* mode with an
 "Apply all mechanical" button.
 
+### Learned splits
+
+The split rule only proposes what the gold vocabulary is sure of. The rest
+are ranked by a small model trained on reviewer decisions
+(`labels/split-labels.jsonl`) and the Virāṭa editor's practice. It learns,
+for example, that a split after तद्/जगत्/श्रीमत् is usually a compound
+(kept joined) and one after भवेत्/स्यात् or before तु is not. On held-out
+decisions, 88% of its p ≥ 0.5 suggestions were accepted.
+
+```sh
+./proof.py splits --out splits.csv          # gold files, p >= 0.3, most likely first
+./proof.py splits --train --out splits.csv  # retrain after adding labels
+```
+
 ## Same verse, different readings
 
 ```sh

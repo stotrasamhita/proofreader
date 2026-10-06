@@ -12,6 +12,7 @@
   proof.py dupes [FILES] [--scope gold|all]   same verse elsewhere with a different reading
   proof.py edits [FILES] --out X.csv  proposed style edits to cherry-pick (approve column)
   proof.py apply-edits X.csv         apply the approved rows
+  proof.py splits [FILES] --out X.csv likely word splits from the learned model
   proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
 """
 
@@ -194,6 +195,21 @@ def cmd_apply_edits(args):
         print('skipped: ' + x, file=sys.stderr)
 
 
+def cmd_splits(args):
+    """Rank likely word splits with the learned model and export them."""
+    from proofreader import splitmodel as SM
+    from proofreader.edits import write_csv
+    idx = Index.load()
+    if args.train or not os.path.exists(SM.MODEL):
+        n, pos = SM.train(idx)
+        print(f'trained on {n} labels ({pos} split)', file=sys.stderr)
+    paths = [rel(p) for p in expand_paths(args.files)] if args.files else read_manifest()
+    paths = [p for p in paths if 'HanumanChalisa' not in p]
+    rows = SM.candidate_rows(paths, idx, SM.load(), args.min_p, SM.rejected_pairs())
+    write_csv(rows, args.out)
+    print(f'{len(rows)} likely split(s) -> {args.out}', file=sys.stderr)
+
+
 def cmd_serve(args):
     from proofreader.server import serve
     serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
@@ -319,6 +335,12 @@ def main():
     p = sub.add_parser('apply-edits', help='apply the rows marked approve in an edits CSV')
     p.add_argument('csv')
     p.set_defaults(fn=cmd_apply_edits)
+    p = sub.add_parser('splits', help='likely word splits ranked by the learned model')
+    p.add_argument('files', nargs='*', help='default: the gold files')
+    p.add_argument('--min-p', type=float, default=0.3)
+    p.add_argument('--train', action='store_true', help='retrain on labels/split-labels.jsonl first')
+    p.add_argument('--out', default='splits.csv')
+    p.set_defaults(fn=cmd_splits)
     p = sub.add_parser('serve', help='browser review UI')
     p.add_argument('files', nargs='+')
     p.add_argument('--host', default='127.0.0.1')
