@@ -138,6 +138,8 @@ def split_word(w, idx):
 def avagraha_word(w, idx, min_share=0.8, min_count=3):
     """S5: spell the word with the avagraha usage gold uses for it, or mark
     an elided अ after ो/े. Returns the respelled form or None."""
+    if w.startswith('ऽ'):
+        return None              # elision across the pāda break: keep it
     k = key(w)
     forms = idx.surface.get(k)
     if not forms:
@@ -173,7 +175,7 @@ def avagraha_word(w, idx, min_share=0.8, min_count=3):
 _MARKS_RE = re.compile('[\u0951-\u0954\u1CD0-\u1CFF\uA8E0-\uA8F1\u200C\u200D]')
 
 
-def word_issues(w, idx, danda=None, nxt=None):
+def word_issues(w, idx, danda=None, nxt=None, allow_join=True):
     """House-style fixes for one token. `danda` is True/False for the last
     word of a verse line (None elsewhere); `nxt` is the following token on
     the same line. Returns (replacement, rules, notes, mechanical, join_next)
@@ -192,7 +194,9 @@ def word_issues(w, idx, danda=None, nxt=None):
         rules.append('final-m'); notes.append('pāda without a danda: final m is written ं')
         cur = cur[:-2] + 'ं'
     elif danda is None and cur.endswith('म्') and nxt:
-        if _VOWEL_START.match(nxt):
+        if not allow_join and _VOWEL_START.match(nxt):
+            pass                 # prose (titles, saṅkalpa) keeps म् + vowel apart
+        elif _VOWEL_START.match(nxt):
             rules.append('join'); notes.append(f'final म् before a vowel: join with {nxt}')
             cur, join = join_vowel(cur, nxt), True
         else:
@@ -245,7 +249,7 @@ def check_units(units, idx):
                         danda = 'skip'           # dash, bracket, comma: leave as written
                 elif u.kind == 'verse' and not continued:
                     danda = line_has_danda(u.macro, j, n)
-                r = word_issues(w, idx, danda, nxt)
+                r = word_issues(w, idx, danda, nxt, allow_join=u.kind == 'verse')
                 if r:
                     rep, rules, notes, mech, join = r
                     n_join = 0

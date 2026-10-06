@@ -99,8 +99,11 @@ class Session:
             self.idx.restore(removed)
 
     def style(self, path):
-        """House-style findings only (no word scoring or metre: fast)."""
+        """House-style findings only (no word scoring or metre: fast).
+        Files in skip-meter.txt (Hindi/Awadhi) are not Sanskrit-styled."""
         rp = rel(path)
+        if rp in self.no_meter:
+            return []
         removed = self.idx.without([rp])
         try:
             return style_findings(parse_file(path), self.idx, self.accepted, rp)
