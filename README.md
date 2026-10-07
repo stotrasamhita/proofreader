@@ -61,6 +61,10 @@ Rules, measured on the gold texts and the Virāṭa original→proofread diff:
 | split | consonant-final word written apart (तत् सर्वं); assimilated sandhi (वाञ्जनो, अकस्मान्मां) and gold compounds stay joined | review |
 | avagraha | elided अ marked (सोऽहं); spelt as gold spells it (वाऽपि) | review |
 
+`house-words.txt` lists spellings decided once for everywhere
+(`जगत्कृत्स्न = जगत् कृत्स्न`, `त्वत् प्रियार्थ = त्वत्प्रियार्थ`). A rule matches at the
+start of a word, whatever the ending, and is applied as a mechanical fix.
+
 On the Virāṭa diff, split flags match the editor 85% of the time and
 avagraha 95%. The review page has a *House style* mode with an
 "Apply all mechanical" button.

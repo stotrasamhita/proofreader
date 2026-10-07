@@ -6,7 +6,7 @@
 {"left": "स्यात्", "right": "परतः", "whole": "स्यात्परतः", "label": 1, "file": "AdhyatmaRamayanam/TeX/BalaKanda.tex", "line": 132}
 {"left": "केचिद्", "right": "दृष्ट्वा", "whole": "केचिद्दृष्ट्वा", "label": 1, "file": "AdhyatmaRamayanam/TeX/KishkindhaKanda.tex", "line": 1804}
 {"left": "जगद्", "right": "गुरुणा", "whole": "जगद्गुरुणा", "label": 0, "file": "stotra-sangrahah/stotras/venkatesha/VenkateshaKaravalambaStotram.tex", "line": 93}
-{"left": "त्वत्", "right": "प्रियार्थं", "whole": "त्वत्प्रियार्थं", "label": 1, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 48}
+{"left": "त्वत्", "right": "प्रियार्थं", "whole": "त्वत्प्रियार्थं", "label": 0, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 48}
 {"left": "जगत्", "right": "त्वं", "whole": "जगत्त्वं", "label": 1, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 3913}
 {"left": "चेद्", "right": "गच्छामहे", "whole": "चेद्गच्छामहे", "label": 1, "file": "AdhyatmaRamayanam/TeX/AyodhyaKanda.tex", "line": 1430}
 {"left": "त्यजाम्येतत्", "right": "कलेवरम्", "whole": "त्यजाम्येतत्कलेवरम्", "label": 1, "file": "AdhyatmaRamayanam/TeX/AyodhyaKanda.tex", "line": 2824}
@@ -14,7 +14,7 @@
 {"left": "तत्", "right": "क्षणादेव", "whole": "तत्क्षणादेव", "label": 0, "file": "stotra-sangrahah/stotras/subrahmanya/SubrahmanyaAshtakam.tex", "line": 60}
 {"left": "यत्", "right": "परमं", "whole": "यत्परमं", "label": 0, "file": "stotra-sangrahah/stotras/rama/RamaStavarajaStotram.tex", "line": 318}
 {"left": "शरवणोद्", "right": "भवः", "whole": "शरवणोद्भवः", "label": 0, "file": "stotra-sangrahah/stotras/subrahmanya/SubrahmanyaShodashaNamaStotram.tex", "line": 21}
-{"left": "जगत्", "right": "कृत्स्नं", "whole": "जगत्कृत्स्नं", "label": 0, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 415}
+{"left": "जगत्", "right": "कृत्स्नं", "whole": "जगत्कृत्स्नं", "label": 1, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 415}
 {"left": "यत्", "right": "कृत्यं", "whole": "यत्कृत्यं", "label": 1, "file": "Mahabharatam/parvas/04-virāṭaparva.tex", "line": 8421}
 {"left": "गृहाद्", "right": "गतो", "whole": "गृहाद्गतो", "label": 1, "file": "stotra-sangrahah/stotras/navagraha/ShanaishcharaAshtakam(Dasharatha).tex", "line": 43}
 {"left": "यद्", "right": "गत्वा", "whole": "यद्गत्वा", "label": 1, "file": "gita/gita.tex", "line": 2505}
@@ -25,7 +25,7 @@
 {"left": "गणगुरुर्गणप्रणयतत्", "right": "परः", "whole": "गणगुरुर्गणप्रणयतत्परः", "label": 0, "file": "stotra-sangrahah/stotras/big/GakaradiGanapatiSahasranamaStotram.tex", "line": 73}
 {"left": "तद्", "right": "गेहं", "whole": "तद्गेहं", "label": 0, "file": "stotra-sangrahah/stotras/big/VakratundaMahaganapatiSahasranamaStotram.tex", "line": 805}
 {"left": "यद्", "right": "भ्रातुः", "whole": "यद्भ्रातुः", "label": 0, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 3264}
-{"left": "यत्", "right": "कृत्यं", "whole": "यत्कृत्यं", "label": 0, "file": "Mahabharatam/parvas/04-virāṭaparva.tex", "line": 19080}
+{"left": "यत्", "right": "कृत्यं", "whole": "यत्कृत्यं", "label": 1, "file": "Mahabharatam/parvas/04-virāṭaparva.tex", "line": 19080}
 {"left": "वालिवद्", "right": "द्रुतम्", "whole": "वालिवद्द्रुतम्", "label": 1, "file": "AdhyatmaRamayanam/TeX/KishkindhaKanda.tex", "line": 1133}
 {"left": "द्युमान्", "right": "भगवते", "whole": "द्युमान्भगवते", "label": 1, "file": "stotra-sangrahah/stotras/krishna/DhruvakrtaBhagavatStavam.tex", "line": 65}
 {"left": "त्वन्तकासिलुलितात्", "right": "पततां", "whole": "त्वन्तकासिलुलितात्पततां", "label": 1, "file": "stotra-sangrahah/stotras/krishna/DhruvakrtaBhagavatStavam.tex", "line": 41}
@@ -557,3 +557,5 @@
 {"left": "तद्", "right": "वचनं", "whole": "तद्वचनं", "label": 1, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 3281}
 {"left": "यद्", "right": "वाणी", "whole": "यद्वाणी", "label": 1, "file": "stotra-sangrahah/stotras/adhyatma-ramayana-stotras/SugrivakrtaRamaStotram.tex", "line": 40}
 {"left": "यत्", "right": "ते", "whole": "यत्ते", "label": 1, "file": "stotra-sangrahah/stotras/adhyatma-ramayana-stotras/ParashuramakrtaRamaStotram.tex", "line": 78}
+{"left": "जगत्", "right": "कृत्स्नमवानरममानुषम्", "whole": "जगत्कृत्स्नमवानरममानुषम्", "label": 1, "file": "AdhyatmaRamayanam/TeX/YuddhaKanda.tex", "line": 284}
+{"left": "भूतकृद्", "right": "भूतभृद्", "whole": "भूतकृद्भूतभृद्", "label": 1, "file": "stotra-sangrahah/stotras/big/VishnuSahasranamaStotram.tex", "line": 185}

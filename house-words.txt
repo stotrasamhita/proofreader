@@ -1,0 +1,10 @@
+# House spellings the style check enforces everywhere (mechanical fixes).
+# One rule per line:  written form = house form
+# A rule matches at the start of a word, so endings vary freely
+# (जगत्कृत्स्न matches जगत्कृत्स्नं, जगत्कृत्स्नमवानरम् …). A space on the
+# left side joins two words; a space on the right side splits one.
+
+यत्कृत्य = यत् कृत्य
+जगत्कृत्स्न = जगत् कृत्स्न
+त्वत् प्रियार्थ = त्वत्प्रियार्थ
+भूतकृद्भूतभृद् = भूतकृद् भूतभृद्

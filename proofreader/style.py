@@ -222,6 +222,52 @@ def word_issues(w, idx, danda=None, nxt=None, allow_join=True):
     return cur, rules, notes, mechanical, join
 
 
+import os as _os
+
+_HOUSE = None
+
+
+def house_words():
+    """Rules from house-words.txt: [(written, house)], longest first."""
+    global _HOUSE
+    if _HOUSE is None:
+        path = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+                             'house-words.txt')
+        rules = []
+        if _os.path.exists(path):
+            with open(path, encoding='utf-8') as f:
+                for line in f:
+                    line = line.split('#', 1)[0].strip()
+                    if '=' in line:
+                        a, b = (x.strip() for x in line.split('=', 1))
+                        if a and b and a != b:
+                            rules.append((a, b))
+        _HOUSE = sorted(rules, key=lambda r: -len(r[0]))
+    return _HOUSE
+
+
+def house_issues(line):
+    """House-word fixes on one line: (lineno, first word, occ, replacement, words absorbed)."""
+    out = []
+    text = line.text
+    for a, b in house_words():
+        start = text.find(a)
+        while start != -1:
+            if start == 0 or not WORD_RE.match(text[start - 1]):
+                m = WORD_RE.match(text, start)
+                first = m.group(0)
+                occ = sum(1 for t in WORD_RE.finditer(text[:start]) if t.group(0) == first)
+                n_words = a.count(' ')
+                # the replacement covers the matched words through to the end of the last one
+                end = start
+                for _ in range(n_words + 1):
+                    t = WORD_RE.search(text, end)
+                    end = t.end()
+                out.append((line.lineno, first, occ, b + text[start + len(a):end], n_words))
+            start = text.find(a, start + 1)
+    return out
+
+
 def check_units(units, idx):
     """All house-style issues in a parsed file, one per token."""
     out = []
@@ -232,11 +278,20 @@ def check_units(units, idx):
             seen = {}
             continued = line.text.rstrip().endswith('-')
             absorbed = set()
+            house = {}
+            for lineno, first, occ, rep, n_words in house_issues(line):
+                house[(first, occ)] = (rep, n_words)
             for t_i, m in enumerate(toks):
                 w = m.group(0)
                 occ = seen.get(w, 0)
                 seen[w] = occ + 1
                 if t_i in absorbed:
+                    continue
+                if (w, occ) in house:
+                    rep, n_words = house[(w, occ)]
+                    out.append(StyleIssue(line.lineno, w, occ, 'house-word', rep, True,
+                                          'house spelling (house-words.txt)', n_words))
+                    absorbed.update(range(t_i + 1, t_i + 1 + n_words))
                     continue
                 last = t_i == len(toks) - 1
                 # what follows the word on this line decides the final-m rule:
