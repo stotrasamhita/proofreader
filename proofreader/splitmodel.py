@@ -62,7 +62,7 @@ def add_labels(decisions):
             if 'split' in d['rule'] and len(parts) == 2 and d['status'] in ('accept', 'reject'):
                 f.write(json.dumps({'left': parts[0], 'right': parts[1], 'whole': d['current'],
                                     'label': 1 if d['status'] == 'accept' else 0,
-                                    'file': d['file']}, ensure_ascii=False) + '\n')
+                                    'file': d['file'], 'line': d['line']}, ensure_ascii=False) + '\n')
 
 
 def _training(idx):
