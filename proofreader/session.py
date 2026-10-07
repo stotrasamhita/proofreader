@@ -89,8 +89,11 @@ class Session:
         self.reload()
 
     def check(self, path, threshold, style=False):
-        """Findings for one file, checked against gold minus itself."""
+        """Findings for one file, checked against gold minus itself.
+        Non-Sanskrit files (skip-meter.txt) get no Sanskrit checks at all."""
         rp = rel(path)
+        if rp in self.no_meter:
+            return []
         removed = self.idx.without([rp])
         try:
             return check_file(path, self.idx, None if rp in self.no_meter else self.meter,
