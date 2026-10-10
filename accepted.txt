@@ -1,0 +1,106 @@
+अंहः  # reviewed correct
+अण्डजाश्चैव  # reviewed correct
+आत्तसज्जधनुषाविषुस्पृशौ  # reviewed correct
+उपहासं  # reviewed correct
+ऐहिकं  # reviewed correct
+ओतुर्भवति  # reviewed correct
+कामक्रोधाभिमानेर्ष्यालोभपैशुन्यवर्जितः  # reviewed correct
+कुलटे  # reviewed correct
+कृत्वौर्ध्वदैहिकं  # reviewed correct
+कृसरं  # reviewed correct
+क्षौद्रं  # reviewed correct
+खण्फण्म्रसि॑  # reviewed correct
+गुणलयो  # reviewed correct
+घृतदीपमखण्डव्रतहेतवे  # reviewed correct
+ङकाराकारशुण्डभृत्  # reviewed correct
+चणकान्कोद्रवांस्तथा  # reviewed correct
+चाण्डाल  # reviewed correct
+चूर्णैर्यछ्राद्धं  # reviewed correct
+जातीपुष्पैः  # reviewed correct
+झलझलञ्चलित  # reviewed correct
+णेत्रं  # reviewed correct
+तत्रर्ग्वेद  # reviewed correct
+तथाऽघं  # reviewed correct
+तातस्ते  # reviewed correct
+तातो  # reviewed correct
+तापसी  # reviewed correct
+दन्तघर्षं  # reviewed correct
+दर्शयन्कौतुकान्बहून्  # reviewed correct
+दर्शयन्विविधान्भृत्यान्स्वेच्छालापान्  # reviewed correct
+देवखातेषु  # reviewed correct
+देहपातकजेन  # reviewed correct
+ध्रौव्याऽध्रौव्ये  # reviewed correct
+नामितः  # reviewed correct
+नारकं  # reviewed correct
+निःक्षत्रियां  # reviewed correct
+निःष्यन्द  # reviewed correct
+नितम्बौ  # reviewed correct
+नैच्छद्  # reviewed correct
+पङ्कजे  # reviewed correct
+पठसे  # reviewed correct
+पदबन्धच्युतिं  # reviewed correct
+पदबन्धस्खलज्जिह्वो  # reviewed correct
+पश्यञ्शृण्वन्  # reviewed correct
+पाटलान्बदरानपि  # reviewed correct
+पार्थध्वजाग्रसंवासी  # reviewed correct
+पितृयज्ञनिष्ठे  # reviewed correct
+पिशाचौ  # reviewed correct
+पीलुभिः  # reviewed correct
+पुण्डरीकोऽथ  # reviewed correct
+पूगीफलैर्नालिकेरैः  # reviewed correct
+प्रगच्छति  # reviewed correct
+फलै  # reviewed correct
+बहुफलं  # reviewed correct
+बौद्धेशो  # reviewed correct
+ब्राह्मणनिन्दकान्  # reviewed correct
+मखकोट्यधिका  # reviewed correct
+माल्यवतौ  # reviewed correct
+मासकस्य  # reviewed correct
+मूषिकवाहनः  # reviewed correct
+यज्ञायुतफलं  # reviewed correct
+यवैर्व्रीहितिलैर्माषैर्गोधूमैश्चणकैस्तथा  # reviewed correct
+याच्ञया  # reviewed correct
+रञ्जयन्वैष्णवान्गणान्  # reviewed correct
+रागेण  # reviewed correct
+राजन्नग्निष्टोमफलं  # reviewed correct
+रामार्थंसङ्गतानि  # reviewed correct
+रोमाञ्चकञ्चुकितमञ्चितघर्मबिन्दु  # reviewed correct
+लभेते  # reviewed correct
+लोभबुद्ध्या  # reviewed correct
+वामदेवोऽशृणोत्  # reviewed correct
+वितथभाषणम्  # reviewed correct
+विद्वन्सकृत्प्राप्य  # reviewed correct
+विधिवदध्यात्मध्यानचिन्तकः  # reviewed correct
+विमौहितौ  # reviewed correct
+वेधं  # reviewed correct
+शमीखदिरपालाशकरीरैः  # reviewed correct
+शात्रवः  # reviewed correct
+शृगालाञ्शशकानपि  # reviewed correct
+शृण्वन्नुलूकविरुतं  # reviewed correct
+शैवः  # reviewed correct
+श्रीवत्सधारिणे  # reviewed correct
+श्वश्रूशुश्रूषणपरा  # reviewed correct
+संशुष्कगलकन्धरः  # reviewed correct
+संसारघर्मपरितापजुषां  # reviewed correct
+सम्यगथास्तु  # reviewed correct
+स्पृष्टाऽथ  # reviewed correct
+स्वेदजोद्भिजजातीनां  # reviewed correct
+होमस्नानजपध्यानसत्रादिपुण्यकर्मणाम्  # reviewed correct
+ह्यवमानं  # reviewed correct
+ह्याषाढर्क्षं  # reviewed correct
+meter: त्वत्समीपं गताः सर्वे त्वमेव शरणं प्रभो  # reviewed correct
+meter: शृणु ब्रह्मन् प्रवक्ष्यामि द्वादशीमाहात्म्यमुत्तमम्  # reviewed correct
+meter: मत्पितुर्वेश्मनि प्रभो भोक्तव्यं नाद्य केनचित्  # reviewed correct
+meter: भागवतं शृणुते यस्तु पुराणं च पठेन्नरः  # reviewed correct
+meter: ॐ नमो देवदेवेश देवदानववन्दित  # reviewed correct
+meter: अयनं भगवतस्तस्मान्नारायण इति स्मृतः  # reviewed correct
+meter: यत्फलं सर्वपुष्पेषु सर्वपत्रेषु नारद  # reviewed correct
+meter: स्वजातिं च परित्यज्य या गताधमजातिषु  # reviewed correct
+meter: इतः परं त्वच्चरणारविन्दयोः  # reviewed correct
+meter: शालग्रामशिलाभूतां दत्त्वा मूर्धनि प्रत्यहम्  # reviewed correct
+meter: संहरिष्यति त्रैलोक्यं सुप्ते चैव जर्नादने  # reviewed correct
+meter: तुलसीदलानि पुष्पाणि ये यच्छन्ति जनार्दने  # reviewed correct
+meter: त्रिभुवनेषु च देवेश चतुर्युगेषु साम्प्रतम्  # reviewed correct
+meter: इष्ट्वा क्रतुशतैर्देवान्दत्त्वा दानान्यनेकशः  # reviewed correct
+meter: श्रीराम राजीवदलायताक्ष  # reviewed correct
+meter: परिधानं ततः कार्यं वस्त्रयुग्मेन चान्वितम्  # reviewed correct
