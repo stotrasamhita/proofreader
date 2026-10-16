@@ -5,7 +5,9 @@ The rule in style.split_word proposes splits only when the gold vocabulary
 is sure. This model ranks every remaining junction (halanta + consonant
 inside a token) by how likely the reviewer is to accept a split there. It is
 trained on reviewer decisions (labels.jsonl: accepted/rejected splits) plus
-the Virāṭa editor's practice (original vs proofread: junctions split vs kept).
+the Virāṭa editor's practice (original vs proofread: junctions split vs kept),
+plus the Gītā against its word-split twin (gita/words/gita-words.tex, same
+line numbers): every junction there is a known word boundary or not.
 Typical signals: after तद्/जगत्/श्रीमत् keep joined (compounds); after verb
 forms like भवेत्/स्यात् and before particles like तु, split.
 """
@@ -24,6 +26,8 @@ MODEL = os.path.join(tool_dir(), 'index', 'split-model.pkl')
 PARTICLES = {'तु', 'च', 'हि', 'वै', 'एव', 'अपि', 'वा', 'न', 'इति', 'ते', 'मे', 'मां', 'त्वां', 'तं',
              'सः', 'तत्', 'यत्', 'सा', 'ताः', 'यदि', 'तदा'}
 VIRATA = ('Mahabharatam/parvas/04-virāṭaparva-orig.tex', 'Mahabharatam/parvas/04-virāṭaparva.tex')
+GITA = ('gita/gita.tex', 'gita/words/gita-words.tex')
+_FINAL = str.maketrans({'द': 'त', 'ग': 'क', 'ड': 'ट', 'ब': 'प', 'ज': 'च'})
 
 
 def _bucket(n):
@@ -65,14 +69,64 @@ def add_labels(decisions):
                                     'file': d['file'], 'line': d['line']}, ensure_ascii=False) + '\n')
 
 
+def _final(p):
+    """Voiced and voiceless final stops are one word end (यद् / यत्)."""
+    return p[:-2] + p[-2].translate(_FINAL) + '्' if p.endswith('्') and len(p) >= 2 else p
+
+
+def gita_labels(idx=None):
+    """Labelled junctions from the Gītā: a junction in a gita.tex token is a
+    word boundary when the word-split line has a pada ending there and the
+    next pada starting there. Boundaries are label 1, except a joined न् + न/म
+    (an assimilated त्/द्, as in तन्मे; a word ending in न् is written apart),
+    which house style keeps joined; compound-internal junctions are label 0.
+    Words written apart at a halanta are label 1."""
+    import re
+    from .text import WORD_RE
+    g, w = (os.path.join(root_dir(), v) for v in GITA)
+    if not (os.path.exists(g) and os.path.exists(w)):
+        return []
+    with open(w, encoding='utf-8') as f:
+        wlines = [re.sub(r'(?<!\\)%.*', '', l) for l in f.read().split('\n')]
+    out = []
+    for u in parse_file(g):
+        ws = u.words()
+        for j, (t, ln) in enumerate(ws):
+            t = clean(t)
+            pads = [clean(p) for p in WORD_RE.findall(wlines[ln.lineno - 1])] if ln.lineno <= len(wlines) else []
+            for i in junctions(t):
+                if idx is not None and idx.words.get(key(t[:i]), 0) < 2:
+                    continue
+                left, right = _final(t[:i]), t[i:]
+                bound = any(a.endswith('्') and len(a) > 2 and left.endswith(_final(a)) and right[:2] == b[:2]
+                            for a, b in zip(pads, pads[1:]))
+                nasal = t[i - 2] == 'न' and t[i] in 'नम'
+                out.append({'left': t[:i], 'right': t[i:], 'whole': t, 'line': ln.lineno,
+                            'label': 1 if bound and not nasal else 0})
+            if t.endswith('्') and j + 1 < len(ws) and ws[j + 1][1] is ln:
+                nxt = clean(ws[j + 1][0])
+                out.append({'left': t, 'right': nxt, 'whole': t + nxt, 'line': ln.lineno, 'label': 1})
+    return out
+
+
 def _training(idx):
     X, y = [], []
     if os.path.exists(LABELS):
         with open(LABELS, encoding='utf-8') as f:
             for line in f:
                 r = json.loads(line)
+                if r['file'] == GITA[0]:
+                    continue                 # the word-split text decides the Gītā
                 X.append(features(r['left'], r['right'], r['whole'], idx))
                 y.append(r['label'])
+    # features as the review page sees them: with the Gītā left out of the index
+    removed = idx.without([GITA[0]])
+    try:
+        for r in gita_labels(idx):
+            X.append(features(r['left'], r['right'], r['whole'], idx))
+            y.append(r['label'])
+    finally:
+        idx.restore(removed)
     o, p = (os.path.join(root_dir(), v) for v in VIRATA)
     if os.path.exists(o) and os.path.exists(p):
         a = [clean(w) for u in parse_file(o) for w, _ in u.words()]
