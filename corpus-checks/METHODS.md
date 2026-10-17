@@ -37,8 +37,14 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Training:** labels from reviewed decisions (`labels/split-labels.jsonl`).
 - **Keep only halanta-junction labels.** Other rows that a round adds pollute the training set.
 
-### Not yet built: case agreement in a list
-Gakaradi 178 read चतुर्थ्यां भौमवारो च चन्द्रसूर्योपरागके: a nominative among locatives, for भौमवारे. `neardup.py` missed it because the right form is itself rare (2 copies in the corpus). A check could flag a word whose ending differs from its neighbours in a च-list, where swapping the ending would make them match.
+### 6. Case ending out of step (`casecheck.py`)
+- **Question:** is a case ending out of step with grammar or with the rest of the line?
+- **Two signals:**
+  - **sandhi:** -o (from -aḥ) before a voiceless consonant, where it must stay -aḥ or become -aś/-as (भौमवारो च, सर्वेशो कमला);
+  - **list:** a word whose ending differs from two or more others in its line, next to च / वा.
+- **Why it was needed:** Gakaradi 178 read चतुर्थ्यां भौमवारो च चन्द्रसूर्योपरागके. `neardup.py` missed it because the right form, भौमवारे, is itself rare (2 copies in the corpus).
+- **Catches:** body parts in a kavaca left nominative where they should be accusative duals (पार्श्वो → पार्श्वे, कर्णो → कर्णौ), and locative absolutes (प्राप्तो प्रसवकाले → प्राप्ते).
+- **False hits:** u-stem vocatives (प्रभो, filtered when प्रभुः is attested), -o from अथो, and vocatives of rarer u-stems (ब्रह्मबन्धो). Every hit needs a reader.
 
 ## Checks for consistency (the same word written two ways)
 
