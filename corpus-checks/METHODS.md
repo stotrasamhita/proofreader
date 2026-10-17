@@ -81,6 +81,7 @@ Each of these finds one word in two forms. One form is chosen and the other is c
 - **Record rejects.** A rejected word goes into `accepted.txt` ("reviewed correct") and a rejected verse into the verse list, so the same false hit never comes back.
 - **Fix every copy.** When fixing a typo, grep the whole corpus for it. Copies of the same stotra and the source text (the Śānti parva for the Bhīṣmastavarāja) often share the slip.
 - **Grammar is not the arbiter for epic text; the source edition (mūlam) is.** Epic and purāṇic texts keep non-Pāṇinian (ārṣa) forms. Virāṭa 5.36 reads ऋजुर्मृदुः सत्यवादो: the ऋदु for ऋजु was a typo, but सत्यवादो (not सत्यवादी) is the mūlam's reading. When the unproofread OCR copy has the same reading, flag the row as "your call" and ask for a check against the source edition.
+- **For a line that is too short, look for an outside copy.** sanskritdocuments.org has many of these texts, including the Adhyātma Rāmāyaṇa (`/doc_raama/adhyaatmaRamAyo.html` for Ayodhyā). Three "off by 2+" lines turned out to have dropped words that the outside copy kept (सुमन्त्रं **मन्त्रिसत्तमम्**, क्रमेण **स्फुटम्**, भस्मसितं **सितं** च). If the outside copy has the same irregular metre, the received text is irregular: record the verse as correct.
 - **Measure on a known pair.** Virāṭa Parva exists as OCR (`-orig`) and as proofread text. `proof.py eval ORIG FIXED` gives real recall figures to test a new check against.
 
 ## Running it on a new text
