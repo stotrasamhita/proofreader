@@ -105,6 +105,7 @@ Between two gold texts it is an error or a variant reading to decide on.
 | `accepted.txt` | Words and verses marked correct, so they are never flagged again. |
 | `skip-meter.txt` | Files whose verses are not metre-checked (e.g. Awadhi). |
 | `index/` | Generated: gold index and metre cache. Rebuild with `build`. |
+| `corpus-checks/` | Corpus-wide consistency and near-miss checks, plus the round tools (mis-click check, apply, audit). `corpus-checks/METHODS.md` lists every proofreading method used so far and how to run them on a new text. |
 | `patches/verse-checker-py3.patch` | Two Python 3 fixes to `../verse-checker`; apply with `git -C ../verse-checker apply ../proofreader/patches/verse-checker-py3.patch`. |
 
 ## How a word is scored
