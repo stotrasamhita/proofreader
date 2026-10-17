@@ -46,6 +46,13 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Catches:** body parts in a kavaca left nominative where they should be accusative duals (पार्श्वो → पार्श्वे, कर्णो → कर्णौ), and locative absolutes (प्राप्तो प्रसवकाले → प्राप्ते).
 - **False hits:** u-stem vocatives (प्रभो, filtered when प्रभुः is attested), -o from अथो, and vocatives of rarer u-stems (ब्रह्मबन्धो). Every hit needs a reader.
 
+### 7. Metre as the evidence (`metrefix.py`)
+- **Question:** for a verse that does not scan, does replacing one word with a word one edit away, attested 3+ times in the corpus, make it scan?
+- **Why it adds something:** both forms can be common words (सहस्रकोटि / सहस्रकोटी), which `neardup.py` cannot see. The metre is what shows which one is wrong.
+- **Run it on:** the open metre rows. Trust a hit when it is the only way, or one of very few ways, to fix the verse, and the replacement is much more common than the word it replaces.
+- **Caught on gold (2026-10-17):** दण्डवत्प्रणि[प]त्याह, भुमौ ×2, समरामि ×3, नाम्नामष्टोत्तर[ं], योगात्मेन, अन्योन्य-ईक्षण. Reading the flagged line turned up two more slips in the same Gaṅgāṣṭaka line, प्रायश्चितं and जलकाणिक्रा.
+- **False hits:** a short common word swapped for another (नमः → नवमः, सदा → सा) can make a verse scan by accident. Mixed upajāti verses (11- and 12-syllable pādas) fail the structural check but are genuine; record them as correct.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
