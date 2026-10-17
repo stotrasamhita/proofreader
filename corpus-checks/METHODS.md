@@ -53,6 +53,13 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Caught on gold (2026-10-17):** दण्डवत्प्रणि[प]त्याह, भुमौ ×2, समरामि ×3, नाम्नामष्टोत्तर[ं], योगात्मेन, अन्योन्य-ईक्षण. Reading the flagged line turned up two more slips in the same Gaṅgāṣṭaka line, प्रायश्चितं and जलकाणिक्रा.
 - **False hits:** a short common word swapped for another (नमः → नवमः, सदा → सा) can make a verse scan by accident. Mixed upajāti verses (11- and 12-syllable pādas) fail the structural check but are genuine; record them as correct.
 
+### 8. Words run together after ः or ं (`runon.py`)
+- **Question:** is a rare word really two ordinary words with the space dropped after a visarga or anusvāra (महात्मनःसदा, परेषांसर्वा)?
+- **Signal:** the joined word occurs at most twice in the corpus, both halves at least 5 times each, and the two halves also occur elsewhere as separate adjacent words (the support count). Real compounds (मनःस्थितं, नभःस्थले, निःसङ्गो) rarely appear split, so they sort to the bottom.
+- **Skipped:** the prefix सं-, and ं before स् (n-sandhi, as in तांस्तथा).
+- **Caught (2026-10-17):** Gītā 5.12 युक्तःकर्मफलं (the Gītā word file and the Bhīṣma parva both split it), Padma बहुशःपापं, Karṇa महात्मनःसदा and परेषांसर्वा. Reading the unsupported hits also turned up a non-run-on slip: Virāṭa पुनःसरः for पुरःसरः.
+- **False hits:** visarga compounds and names (स्वयंसिद्धः, तपःसक्तो) are written joined on purpose. Read the line.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
