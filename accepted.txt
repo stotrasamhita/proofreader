@@ -299,3 +299,23 @@ meter: इत्थं विचिन्त्याखिलराक्षस
 meter: अहमशेषमिदं मुनिवाक्यतः  # Phase B round 1: checked against the mūlam / your call
 meter: ब्रह्मणोक्तमरविन्दलोचन  # Phase B round 1: checked against the mūlam / your call
 meter: अथ प्रभाते मुनिना समेतो  # Phase B round 1: checked against the mūlam / your call
+एवंरूपा  # runon.py: compound written joined on purpose
+एवंवीर्यं  # runon.py: compound written joined on purpose
+ज्योतिःस्वभावे  # runon.py: compound written joined on purpose
+तपःसक्तो  # runon.py: compound written joined on purpose
+तपःसिद्धिः  # runon.py: compound written joined on purpose
+त्रिःपरिक्रम्य  # runon.py: compound written joined on purpose
+नभःस्थले  # runon.py: compound written joined on purpose
+निःसङ्कल्पो  # runon.py: compound written joined on purpose
+निःसङ्गो  # runon.py: compound written joined on purpose
+प्रातःकृत्यं  # runon.py: compound written joined on purpose
+बहिःप्राणो  # runon.py: compound written joined on purpose
+बहिःस्थिताः  # runon.py: compound written joined on purpose
+भुवःपुत्रो  # runon.py: compound written joined on purpose
+मनःप्रिया  # runon.py: compound written joined on purpose
+मनःस्थितं  # runon.py: compound written joined on purpose
+शिरःस्नातो  # runon.py: compound written joined on purpose
+स्वयंश्रेष्ठो  # runon.py: compound written joined on purpose
+स्वयंसिद्धः  # runon.py: compound written joined on purpose
+स्वःस्थितः  # runon.py: compound written joined on purpose
+ह्रींशीला  # runon.py: compound written joined on purpose
