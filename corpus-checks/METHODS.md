@@ -60,6 +60,18 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Caught (2026-10-17):** Gītā 5.12 युक्तःकर्मफलं (the Gītā word file and the Bhīṣma parva both split it), Padma बहुशःपापं, Karṇa महात्मनःसदा and परेषांसर्वा. Reading the unsupported hits also turned up a non-run-on slip: Virāṭa पुनःसरः for पुरःसरः.
 - **False hits:** visarga compounds and names (स्वयंसिद्धः, तपःसक्तो) are written joined on purpose. Read the line.
 
+### 9. A letter moved one place (`moved.py`)
+- **Question:** does swapping two neighbouring letters (a consonant, a half-consonant such as र्, a vowel sign) turn a sequence the corpus never uses into one it uses often?
+- **Why it was needed:** Virāṭa had हयाञ्छत्रुनिर्बहण for -निबर्हण. Every other check missed it or buried it:
+  - moving र् past ब changes two code points, so `neardup.py` (one edit) cannot see it;
+  - the word is a long compound, rare as a whole even when spelt right, so whole-word checks have nothing to compare it with;
+  - check 1 did flag it (the trigram बहण occurs nowhere else) but ranked it 2,267th of 7,003, with a nonsense suggestion.
+  The metre check flagged the verse, which is how it was found.
+- **Signal:** compare only a window of letters around the swap (two either side), counted as substrings across the corpus. That works inside compounds. The window must occur at most once outside this word, and the swapped window at least 10 times.
+- **Order:** swaps that move र् first. The reph typed a letter early or late is the commonest slip of this kind.
+- **Caught (2026-10-17):** निर्बहण (निबर्हण ×125), क्षत्रियस्तोष्टुर्महति (-तोष्टुमर्हति), Padma जर्नादने (जनार्दने; the swap is two places, but the window still flags it), Bhīṣmastavarāja and Śānti सवर्तः (the sage संवर्तः).
+- **False hits:** many, outside the र् tier (नूतने → नूतेन). The suggestion is only the swap; read the line for the real fix.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
