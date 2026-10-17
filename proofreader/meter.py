@@ -85,9 +85,20 @@ def anushtup_line_ok(p):
 
 
 def anushtup_like(patterns):
-    """Lines are 16-syllable half-verses, give or take the one being wrong."""
-    return (bool(patterns) and all(15 <= len(p) <= 17 for p in patterns)
-            and sum(len(p) == 16 for p in patterns) * 2 >= len(patterns))
+    """Lines are 16-syllable half-verses, give or take the one being wrong.
+    Not when the lines share one fixed pattern that breaks the śloka rules:
+    that is a 16-syllable vṛtta such as pañcacāmara (LG ×8)."""
+    if not (bool(patterns) and all(15 <= len(p) <= 17 for p in patterns)
+            and sum(len(p) == 16 for p in patterns) * 2 >= len(patterns)):
+        return False
+    from collections import Counter
+    full = [p for p in patterns if len(p) == 16]
+    if len(full) >= 3:            # a 16-syllable vṛtta has four lines; a śloka two (or three)
+        ref = ''.join(Counter(p[k] for p in full).most_common(1)[0][0] for k in range(16))
+        if (not anushtup_line_ok(ref)
+                and all(sum(a != b for a, b in zip(p[:15], ref[:15])) <= 2 for p in full)):
+            return False
+    return True
 
 
 def _matras(p):
@@ -173,3 +184,172 @@ def anushtup_hint(patterns):
             if p[off + 1:off + 3] == 'LL':
                 hints.append(f'line {i + 1}: {half} pāda syllables 2–3 are both laghu')
     return '; '.join(hints)
+
+
+# --- pointing at the syllable a hint is about -------------------------------
+import re as _re
+
+_C = '[क-हक़-य़]़?'
+_AKSHARA = _re.compile(
+    f'(?:{_C}्‍?‌?)*(?:{_C}[ा-ौॢॣ]?|[अ-औॠ-ॣ])'
+    f'[ँ-ः]?(?:{_C}्(?![क-हक़-य़]))*')
+
+
+def syllables(text):
+    """The syllables of a pāda as written, one per vowel (as verse-checker
+    counts them): a trailing half-consonant joins the syllable before it."""
+    return _AKSHARA.findall(text.replace('ऽ', ''))
+
+
+def _majority(pats, i):
+    same = [p for j, p in enumerate(pats) if j != i and len(p) == len(pats[i])]
+    if not same:
+        return None
+    from collections import Counter
+    return ''.join(Counter(p[k] for p in same).most_common(1)[0][0] for k in range(len(pats[i])))
+
+
+def _ref(pats, i):
+    """Majority pattern of the other lines at their most common length."""
+    from collections import Counter
+    others = [p for j, p in enumerate(pats) if j != i and p]
+    if not others:
+        return None
+    L = Counter(len(p) for p in others).most_common(1)[0][0]
+    same = [p for p in others if len(p) == L]
+    return ''.join(Counter(p[k] for p in same).most_common(1)[0][0] for k in range(L))
+
+
+def _free(L):
+    """Positions where lines may differ: line-final, a mid-line pāda end, and
+    the 1st/3rd syllable of 11/12-syllable pādas (upajāti, epic triṣṭubh)."""
+    free = {L - 1}
+    if L % 2 == 0:
+        free.add(L // 2 - 1)
+    pada = L // 2 if L in (22, 24) else L
+    if pada in (11, 12):
+        free |= {o + d for o in range(0, L, pada) for d in (0, 2)}
+    return free
+
+
+def _misses(a, b):
+    return sum(x != y for x, y in zip(a[:-1], b[:-1]))      # last syllable is anceps
+
+
+def _length_slip(p, ok):
+    """Syllables near where one was added or dropped: for an extra syllable,
+    those whose removal makes the line fit; for a missing one, the two either
+    side of the gap. `ok(q)` scores a repaired line (lower is better)."""
+    if not p:
+        return set()
+    if len(p) > 1:
+        tries = []
+        for k in range(len(p)):
+            tries.append((ok(p[:k] + p[k + 1:]), {k}, 'extra'))
+        for k in range(len(p) + 1):
+            for w in 'LG':
+                tries.append((ok(p[:k] + w + p[k:]), {k - 1, k} - {-1, len(p)}, 'gap'))
+        tries = [t for t in tries if t[0] is not None]
+        if not tries:
+            return set()
+        best = min(t[0] for t in tries)
+        hits = [t for t in tries if t[0] == best]
+        out = set().union(*(t[1] for t in hits))
+        # a run of like syllables gives several equal places: keep a short stretch
+        return out if max(out) - min(out) < 8 and len(out) == max(out) - min(out) + 1 or len(out) <= 3 else set()
+    return set()
+
+
+def offending(patterns, hint):
+    """{line index: set of syllable indices} that a hint from anushtup_hint or
+    structural_check is about."""
+    out = {}
+    for part in hint.split('; '):
+        m = _re.match(r'(?:anuṣṭup: )?line (\d+)', part)
+        if not m:
+            continue
+        i = int(m.group(1)) - 1
+        if i >= len(patterns):
+            continue
+        p, s = patterns[i], out.setdefault(i, set())
+        if m := _re.search(r'even pāda syllables 5–7 are (\w{3})', part):
+            s |= {12 + k for k in range(3) if m.group(1)[k] != 'LGL'[k]}
+        elif 'odd pāda syllables 5–7' in part:
+            s |= {4, 5, 6}
+        elif m := _re.search(r'(odd|even) pāda syllables 2–3', part):
+            o = 0 if m.group(1) == 'odd' else 8
+            s |= {o + 1, o + 2}
+        elif m := _re.search(r'at syllable ([\d, ]+)', part):
+            s |= {int(x) - 1 for x in m.group(1).split(',') if x.strip()}
+        elif 'syllables (expected 16)' in part:
+            if len(p) in (15, 17):
+                s |= _length_slip(p, lambda q: 0 if anushtup_line_ok(q) else None)
+        elif 'mātrās (' in part or 'syllables (the others' in part:
+            ref = _ref(patterns, i)
+            if ref and len(ref) == len(p):
+                s |= {k for k in range(len(p)) if k not in _free(len(p)) and p[k] != ref[k]}
+                if not s:                 # only allowed variation here: the slip is a line of another length
+                    for j, q in enumerate(patterns):
+                        rj = _ref(patterns, j)
+                        if rj and abs(len(rj) - len(q)) == 1:
+                            out.setdefault(j, set()).update(
+                                _length_slip(q, lambda x, rj=rj: _misses(x, rj) if len(x) == len(rj) else None))
+            elif ref and abs(len(ref) - len(p)) == 1:
+                s |= _length_slip(p, lambda q: _misses(q, ref) if len(q) == len(ref) else None)
+    return {i: s for i, s in out.items() if s}
+
+
+def mark(lines, patterns, hint, left='[', right=']', soft=None, sleft='(', sright=')'):
+    """The pādas with the syllables the hint is about bracketed. A line whose
+    syllable count does not match its pattern is left as it is. Syllables in
+    `soft` ({line: {syllable}}, e.g. from by_position) get sleft/sright."""
+    off = offending(patterns, hint)
+    soft = soft or {}
+    out = []
+    for i, l in enumerate(lines):
+        sy = syllables(l)
+        if i not in off or i >= len(patterns) or len(sy) != len(patterns[i]):
+            out.append(l)
+            continue
+        res, pos, n = '', 0, 0
+        for m in _AKSHARA.finditer(l.replace('ऽ', '\x00')):
+            a = m.group(0)
+            if n in soft.get(i, ()):
+                a = sleft + a + sright
+            elif n in off[i]:
+                a = left + a + right
+            res += l[pos:m.start()] + a
+            pos, n = m.end(), n + 1
+        out.append((res + l[pos:]).replace('\x00', 'ऽ').replace(right + left, '').replace(sright + sleft, ''))
+    return out
+
+
+_LONG = _re.compile('[ाीूॄेैोौॣआईऊॠएऐओऔँ-ः]|्$')
+_CONJ = _re.compile(f'^{_C}्')
+
+
+def by_position(lines, patterns, hint):
+    """Marked syllables that are heavy only because a conjunct follows: a short
+    vowel with no ं/ः or final consonant of its own (नमा«मि» श्रीविहारिणम्).
+    The ārṣa licence often lets such a syllable count as light, so a verse
+    whose every mark is of this kind is likely correct.
+    Returns {line: {syllable: 'word' (conjunct starts the next word) or 'inner'}}.
+    Hints about a wrong syllable count are skipped (their marks are guesses)."""
+    if 'syllables (' in hint or 'unequal' in hint:
+        return {}
+    out = {}
+    for i, ks in offending(patterns, hint).items():
+        if i >= len(lines) or i >= len(patterns):
+            continue
+        ms = list(_AKSHARA.finditer(lines[i].replace('ऽ', '\x00')))
+        if len(ms) != len(patterns[i]):
+            continue
+        for k in ks:
+            if patterns[i][k] != 'G' or k + 1 >= len(ms):
+                continue
+            a, b = ms[k].group(0), ms[k + 1].group(0)
+            if _LONG.search(a) or not _CONJ.match(b):
+                continue
+            gap = lines[i][ms[k].end():ms[k + 1].start()]
+            out.setdefault(i, {})[k] = 'word' if gap.strip(' -') == '' and gap else 'inner'
+    return out

@@ -230,7 +230,7 @@ def verse_ok(lines, meter):
 
 
 def _meter_findings(unit, meter, display_path, accepted=frozenset()):
-    from .meter import anushtup_like, severity
+    from .meter import anushtup_like, severity, mark, by_position
     lines = [l.text for l in unit.lines]
     if not any(l.strip() for l in lines) or verse_id(lines) in accepted:
         return []
@@ -242,6 +242,15 @@ def _meter_findings(unit, meter, display_path, accepted=frozenset()):
         reasons = ['anuṣṭup: ' + r['hint']]
     else:
         reasons = [f'{r["hint"]} (closest known metre: {r["metre"] or "none"})']
+    soft = by_position(lines, pats, r['hint'])
+    marked = mark(lines, pats, r['hint'], '«', '»', {i: set(v) for i, v in soft.items()}, '‹', '›')
+    at = [m.strip() for m, l in zip(marked, lines) if m != l]
+    if at:
+        reasons.append('at: ' + ' / '.join(at))
+    kinds = {k for v in soft.values() for k in v.values()}
+    if kinds:
+        reasons.append('‹›: light, heavy only before a conjunct'
+                       + (' at the next word (likely ārṣa)' if kinds == {'word'} else ''))
     reasons.append('pattern: ' + ' | '.join(f'{p} ({len(p)})' for p in pats))
     score = severity(r['hint'])
     return [Finding(display_path, unit.lines[0].lineno, 'meter', ' / '.join(lines),
