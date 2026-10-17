@@ -319,3 +319,73 @@ meter: अथ प्रभाते मुनिना समेतो  # Phase 
 स्वयंसिद्धः  # runon.py: compound written joined on purpose
 स्वःस्थितः  # runon.py: compound written joined on purpose
 ह्रींशीला  # runon.py: compound written joined on purpose
+meter: तमापतन्तं परमेण तेजसा  # Phase B round 1: marked correct on the page
+meter: तमब्रवीत् किञ्चिदिव प्रहस्य  # Phase B round 1: marked correct on the page
+meter: तानर्जुनो दूरतरं विभज्य  # Phase B round 1: marked correct on the page
+meter: युधिष्ठिरश्चापि सुसम्प्रहृष्टो  # Phase B round 1: marked correct on the page
+meter: धनञ्जयेनासि पुनर्वनाय  # Phase B round 1: marked correct on the page
+meter: युधिष्ठिराय दास्यामि यातु ते मानसो ज्वरः  # Phase B round 1: marked correct on the page
+meter: करोति दुःखेन हि कर्मतन्त्रं  # Phase B round 1: marked correct on the page
+meter: इमां कथां यः शृणुयात् पठेद् वा  # Phase B round 1: marked correct on the page
+meter: पश्यन्ति ये सर्वगुहाशयस्थं  # Phase B round 1: marked correct on the page
+meter: ओं गणेश्वरो गणाध्यक्षो गणाराध्यो गणप्रियः  # Phase B round 1: marked correct on the page
+meter: श्रीनाथ कमलपत्राक्ष वासुदेव जगत्पते  # Phase B round 1: marked correct on the page
+meter: श्रीनाथ कमलपत्राक्ष गोविन्द मधुसूदन  # Phase B round 1: marked correct on the page
+meter: स्तन्यं पिबन्तं जननीमुखाम्बुजं  # Phase B round 1: marked correct on the page
+meter: देहि मे तनयं राम दशरथ-प्रियनन्दन  # Phase B round 1: marked correct on the page
+meter: राम राघव सीतेश लक्ष्मणाग्रज देहि मे  # Phase B round 1: marked correct on the page
+meter: अपराजितः सर्वसहो विदग्धः सर्ववाहनः  # Phase B round 1: marked correct on the page
+meter: शान्तं पद्मानस्थं शशिधरमुकुटं पञ्चवक्त्रं त्रिनेत्रं  # Phase B round 1: marked correct on the page
+meter: त्रिदशस्त्रिकालधृक् कर्मसर्वबन्धविमोचनः  # Phase B round 1: marked correct on the page
+meter: सोमपोऽमृतपः सोमः पुरुजित् पुरुसत्तमः  # Phase B round 1: marked correct on the page
+meter: धनुर्धरो धनुर्वेदो दण्डो दमयिता दमः  # Phase B round 1: marked correct on the page
+meter: युधिष्ठिरो धर्ममयो महाद्रुमः  # Phase B round 1: marked correct on the page
+meter: मूढः कश्चन वैयाकरणो  # Phase B round 1: marked correct on the page
+meter: भज गोविन्दं भज गोविन्दं  # Phase B round 1: marked correct on the page
+meter: त्वं हि यजुर्ऋक् साम त्वमागमस्त्वं वषट्कारः  # Phase B round 1: marked correct on the page
+meter: ॐ स्वस्तिश्च नमः स्वाहा स्वधा त्वं दक्षिणा तथा  # Phase B round 1: marked correct on the page
+meter: तव देववरस्य नामभिर्बहुपापा अपि ते पवित्रिताः  # Phase B round 1: marked correct on the page
+meter: निष्प्रपञ्चनिर्विकल्पनिर्मलं निरामयम्  # Phase B round 1: marked correct on the page
+meter: चन्द्र-कान्ताननाम्भोजं चन्द्रबिम्ब-उपमाननाम्  # Phase B round 1: marked correct on the page
+meter: मोक्षप्रियां शुभां नित्यां सुभगां शोभनप्रियाम्  # Phase B round 1: marked correct on the page
+meter: शुभं दिशतु नो देवी कामाक्षी सर्वमङ्गला  # Phase B round 1: marked correct on the page
+meter: अयि मयि दीनदयालुतया कृपयैव त्वया भवितव्यमुमे  # Phase B round 1: marked correct on the page
+meter: इत्युक्त्वा परशुरामश्च नत्वा तां च रुरोद ह  # Phase B round 1: marked correct on the page
+meter: पाण्ड्येशवंशतिलकं केरळे केलिविग्रहम्  # Phase B round 1: marked correct on the page
+meter: त्र्यम्बकपुरादीशं गणाधिपसमन्वितम्  # Phase B round 1: marked correct on the page
+meter: ॐकारसन्निभमिभाननमिन्दुभालं  # Phase B round 1: marked correct on the page
+meter: कुलाचलांसो व्योमनाभिः कल्पद्रुमवनालयः  # Phase B round 1: marked correct on the page
+meter: गजेशो गरीयान् गद्येड्यो गतभीर्गदितागमः  # Phase B round 1: marked correct on the page
+meter: पुरुषोत्तमे भक्तसखं चक्रतीर्थे सुदर्शनम्  # Phase B round 1: marked correct on the page
+meter: अगणितगुणमप्रमेयमाद्यं  # Phase B round 1: marked correct on the page
+meter: निरवधिसुखमिष्टदातारमीड्यं  # Phase B round 1: marked correct on the page
+meter: अविरतभवभावनातिदूरं  # Phase B round 1: marked correct on the page
+meter: कृतनिलयमनिशं वटाकमूले  # Phase B round 1: marked correct on the page
+meter: द्रुहिणसुतपूजिताङ्घ्रिपद्मं  # Phase B round 1: marked correct on the page
+meter: स्मितधवलविकासिताननाब्जं  # Phase B round 1: marked correct on the page
+meter: रमानाथो महीभर्ता भूधरः पुरुषोत्तमः  # Phase B round 1: marked correct on the page
+meter: ततोऽविदूरे परिगृह्य चापं  # Phase B round 1: marked correct on the page
+meter: मर्त्यावतारे मनुजाकृतिं हरिं  # Phase B round 1: marked correct on the page
+meter: एवं सुदुःखेन परिप्लुता सा  # Phase B round 1: marked correct on the page
+meter: ततस्तु काले महति प्रयाते  # Phase B round 1: marked correct on the page
+meter: गच्छन्तमालोक्य रमासमेतं  # Phase B round 1: marked correct on the page
+meter: अथाऽऽगतस्तत्र पितामहो महान्  # Phase B round 1: marked correct on the page
+meter: पितामहप्रार्थनया स रामः  # Phase B round 1: marked correct on the page
+meter: विचित्ररत्नाञ्चितसूत्रनद्ध-  # Phase B round 1: marked correct on the page
+meter: न स्त्रियो जातु मन्येत बाह्ये वाऽभ्यन्तरेऽपि वा  # Phase B round 1: marked correct on the page
+meter: नाक्षत्रियो नूनमयं भविष्यति  # Phase B round 1: marked correct on the page
+meter: तस्याग्रतः स्वानि धनूंषि पार्थिवो  # Phase B round 1: marked correct on the page
+meter: एवं विराटेन समेत्य पाण्डवो  # Phase B round 1: marked correct on the page
+meter: अनुमानये त्वां सैरन्ध्रि नावमन्ये कथञ्चन  # Phase B round 1: marked correct on the page
+meter: शरणागतेयं सुश्रोणी मया दत्ताभया च सा  # Phase B round 1: marked correct on the page
+meter: प्रदुद्रुवुश्चाप्यपरे तथा जना  # Phase B round 1: marked correct on the page
+meter: योऽयं युवा वारणयूथपोपमो  # Phase B round 1: marked correct on the page
+meter: सैरन्ध्रि जानासि मम व्रतं हि  # Phase B round 1: marked correct on the page
+meter: सा प्राद्रवत् काञ्चनमाल्यधारिणी  # Phase B round 1: marked correct on the page
+meter: तन्वी समाङ्गी मृदुमन्द्रलोचना  # Phase B round 1: marked correct on the page
+meter: सा नागनासोपमसंहितोरू-  # Phase B round 1: marked correct on the page
+meter: किमागता काञ्चनमाल्यधारिणी  # Phase B round 1: marked correct on the page
+meter: सम्यक् प्रजानन्नपि सत्यविक्रमो  # Phase B round 1: marked correct on the page
+meter: अथोत्तरो वर्म महाप्रभावं  # Phase B round 1: marked correct on the page
+meter: स तं दृष्ट्वा रथानीकं पार्थः सारथिमब्रवीत्  # Phase B round 1: marked correct on the page
+meter: विक्रोशमात्रं यात्वा तु पार्थो वैराटिमब्रवीत्  # Phase B round 1: marked correct on the page
