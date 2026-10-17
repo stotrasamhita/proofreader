@@ -94,6 +94,8 @@ Each of these finds one word in two forms. One form is chosen and the other is c
   - a decided form that a later edit undid;
   - the opposite form still standing elsewhere.
 - **Re-run everything after each round.** Fixes create new inconsistencies, for example a round-13 accept that split प्राची सरस्वती in one place only. Repeat until every scan is empty or fully signed off.
+- **Let the reviewer edit the whole verse, not just the flagged pāda.** The metre check flags the pāda that differs from the others, but the slip is often in another pāda (Yamāṣṭakam's extra यः, Tulasī's दानतोयविशुद्धि[दा], Gaṇeśa 108's श्रीदोऽज उत्पलकरः). Give each failing verse one row with all its pādas editable, one per line; `apply_round.py` applies such rows pāda by pāda.
+- **Compare a nāmāvalī with its stotram.** Of the Aṣṭottaraśatanāma pairs, Tulasī's nāmāvalī had the right form (दानतोयविशुद्धिदायै) and Veṅkaṭeśa's had a different name (मङ्गेश for रङ्गेश): each copy catches slips in the other.
 - **Record rejects.** A rejected word goes into `accepted.txt` ("reviewed correct") and a rejected verse into the verse list, so the same false hit never comes back.
 - **Fix every copy.** When fixing a typo, grep the whole corpus for it. Copies of the same stotra and the source text (the Śānti parva for the Bhīṣmastavarāja) often share the slip.
 - **Grammar is not the arbiter for epic text; the source edition (mūlam) is.** Epic and purāṇic texts keep non-Pāṇinian (ārṣa) forms. Virāṭa 5.36 reads ऋजुर्मृदुः सत्यवादो: the ऋदु for ऋजु was a typo, but सत्यवादो (not सत्यवादी) is the mūlam's reading. When the unproofread OCR copy has the same reading, flag the row as "your call" and ask for a check against the source edition.
