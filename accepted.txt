@@ -293,3 +293,9 @@ meter: को वा दयालुः स्मृतकामधेनुः
 meter: साश्वं ससूतं सरथं स पार्थं
 शस्त्रास्त्रेषु  # reviewed correct
 ब्रह्मबन्धो  # reviewed correct
+meter: यतिवरहृदयेसदाविभान्तं  # Phase B round 1: checked against the mūlam / your call
+meter: वृषभकृतमिदमिष्टसिद्धिदं  # Phase B round 1: checked against the mūlam / your call
+meter: इत्थं विचिन्त्याखिलराक्षसेन्द्रो  # Phase B round 1: checked against the mūlam / your call
+meter: अहमशेषमिदं मुनिवाक्यतः  # Phase B round 1: checked against the mūlam / your call
+meter: ब्रह्मणोक्तमरविन्दलोचन  # Phase B round 1: checked against the mūlam / your call
+meter: अथ प्रभाते मुनिना समेतो  # Phase B round 1: checked against the mūlam / your call
