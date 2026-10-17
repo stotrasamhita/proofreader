@@ -63,6 +63,8 @@ Each of these finds one word in two forms. One form is chosen and the other is c
 - Hyphens and `\mbox{}` are typesetting, so count them as joined.
 - Look-alikes are different words: ते न / तेन, स ह / सह.
 
+**Layout:** a long-metre verse (pādas of 10 or more syllables) is written as four pādas when the file writes its other long verses that way. Some stotras write every verse in two long lines; that is that text's choice, so leave it. A pāda break inside a word ends in a plain `-`, as in चित्तवृत्ति- / स्त्वन्नाम… (280 places in gold). Never use `\-`: it is an optional hyphen and does not print at the end of a pāda line.
+
 **Arbiter:** follow a reference text the editor trusts most (here the Gītā, with `gita/words/gita-words.tex` as a fully split copy). Then follow grammar, then the majority. Still surface disagreements with the arbiter, because it has rare slips too.
 
 ## Process safeguards
