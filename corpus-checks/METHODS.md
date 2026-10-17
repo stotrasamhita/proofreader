@@ -72,6 +72,13 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Caught (2026-10-17):** निर्बहण (निबर्हण ×125), क्षत्रियस्तोष्टुर्महति (-तोष्टुमर्हति), Padma जर्नादने (जनार्दने; the swap is two places, but the window still flags it), Bhīṣmastavarāja and Śānti सवर्तः (the sage संवर्तः).
 - **False hits:** many, outside the र् tier (नूतने → नूतेन). The suggestion is only the swap; read the line for the real fix.
 
+### 10. One syllable-level edit that makes a verse scan (`metrerepair.py`)
+- **Question:** for a verse that fails the metre check, is there one small edit (a vowel's length, an anusvāra or visarga, a doubled consonant, a virāma added or dropped, one akṣara or one conjunct dropped) after which it scans? `--all` includes verses already recorded as correct.
+- **Why it adds something:** unlike check 7, the new word need not be attested, so it works inside long compounds (दन्तपङ्कित → दन्तपङ्क्ति).
+- **Ranking:** keep an edit when it lowers the word's proofreader score by 1.5 or more, or when the new word is well attested and the edit is not a deletion.
+- **Result on gold (2026-10-17):** a second pass over all 239 failing verses (225 recorded correct) found no new fix among the recorded ones. Reading the 14 unrecorded verses found four real slips: Padma सुषुप्तः → सुषुपतुः (dual, "the two slept"), Vivāha Maṅgalāṣṭaka भूधराश्च → भूधराः, Dhanvantari Aṣṭottara दन्तपङ्कित → दन्तपङ्क्ति, Śiva Mahimna स्त्वद्\mbox{}ध्रुवमिं → स्त्वध्रुवमिदं. The cluster, virāma and vowel-move edits were added after that: they now find the second and third, and point at the right word for the first (सुषुपतः). A syllable inserted (मिं → मिदं) is not tried.
+- **False hits:** many. Deleting a syllable often leaves a short common word (देहि → हि, सदा → स) that scans by accident, and Upajāti verses that mix 11- and 12-syllable pādas, or Purāṇa ślokas with a 17-syllable line, have no real fix. Read the verse.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.

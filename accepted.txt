@@ -454,7 +454,6 @@ meter: परास्य शक्तिर्विविधैव श्र�
 meter: वाणी पुस्तकमम्बिके गिरिसुते पद्मानि पद्मासना  # Phase B round 1: marked correct on the page
 meter: हरिवरासनं विश्वमोहनं  # Phase B round 1: marked correct on the page
 meter: यतिवरहृदये सदा विभान्तं  # Phase B round 1: marked correct on the page
-meter: कालभैरवाष्टकं पठन्ति ये मनोहरं  # Phase B round 1: marked correct on the page
 meter: भुक्तिमुक्तिदायकं प्रशस्तचारुविग्रहं  # Phase B round 1: marked correct on the page
 meter: अङ्गे विराजद्भुजङ्गम् अभ्र-गङ्गा-तरङ्गाभि-रामोत्तमाङ्गम्  # Phase B round 1: marked correct on the page
 meter: नागेन्द्रहाराय त्रिलोचनाय  # Phase B round 1: marked correct on the page
@@ -496,7 +495,13 @@ meter: आदौ रामतपोवनादिगमनं हत्वा �
 meter: श्रीरामचन्द्रचरणौ मनसा स्मरामि  # Phase B round 4: marked correct on the page
 meter: वाणी पुस्तकमम्बिके गिरिसुते पद्मानि पद्मासना  # Phase B round 4: marked correct on the page
 meter: भुक्तिमुक्तिदायकं प्रशस्तचारुविग्रहं  # Phase B round 4: marked correct on the page
-meter: कालभैरवाष्टकं पठन्ति ये मनोहरं  # Phase B round 4: marked correct on the page
 meter: अङ्गे विराजद्भुजङ्गम् अभ्र-गङ्गा-तरङ्गाभि-रामोत्तमाङ्गम्  # Phase B round 4: marked correct on the page
 meter: नागेन्द्रहाराय त्रिलोचनाय  # Phase B round 4: marked correct on the page
 meter: ध्यात्वा चित्ते शिवाख्यं प्रचुरतरधनं नैव दत्तं द्विजेभ्यो  # Phase B round 4: marked correct on the page
+meter: दृष्ट्वाऽथ रामं जनकात्मजायुतं  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: दशवर्षसहस्राणि तपस्तप्यति यो नरः  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: यन्मण्डलं देवगणैः सुपूजितं विप्रैः स्तुतं भावनमुक्तिकोविदम्  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: यन्मण्डलं सर्वजनैश्च पूजितं ज्योतिश्च कुर्यादिह मर्त्यलोके  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: मनोज्ञरम्भावनखण्डखण्डितान्  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: पुन्नागनीलोत्पलकुन्दजाती-  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
+meter: ततो भवन्तं कतमोऽपि देव  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
