@@ -79,6 +79,12 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Result on gold (2026-10-17):** a second pass over all 239 failing verses (225 recorded correct) found no new fix among the recorded ones. Reading the 14 unrecorded verses found four real slips: Padma सुषुप्तः → सुषुपतुः (dual, "the two slept"), Vivāha Maṅgalāṣṭaka भूधराश्च → भूधराः, Dhanvantari Aṣṭottara दन्तपङ्कित → दन्तपङ्क्ति, Śiva Mahimna स्त्वद्\mbox{}ध्रुवमिं → स्त्वध्रुवमिदं. The cluster, virāma and vowel-move edits were added after that: they now find the second and third, and point at the right word for the first (सुषुपतः). A syllable inserted (मिं → मिदं) is not tried.
 - **False hits:** many. Deleting a syllable often leaves a short common word (देहि → हि, सदा → स) that scans by accident, and Upajāti verses that mix 11- and 12-syllable pādas, or Purāṇa ślokas with a 17-syllable line, have no real fix. Read the verse.
 
+### 11. A consonant doubled after repha (`repha.py`)
+- **Question:** does a word double the consonant after र्, as old printings do (सूर्य्य, सर्व्व, धर्म्म, आर्त्त, मुहूर्त्त, वर्द्धित, मर्द्दल)? Gold writes it single. An unaspirated stop before its aspirate counts as a doubling (र्द्ध, र्त्थ).
+- **Not flagged:** र्च्छ, because च्छ is the ordinary spelling of a medial छ (gold has मूर्च्छ- 30 times, मूर्छ- 4). Also र्द्धि from ऋद्धि (महर्द्धि, परर्द्धिः, धनर्द्धि), told apart from vardh- (वर्द्धित, वर्द्धिनी) by the letter after it.
+- **Not a slip:** कार्त्तिक(ेय) is from कृत्तिका, so the त्त is etymological. Gold writes it both ways (24 doubled, 27 single), and the editor ruled both correct and not to be standardised (round B7, 2026-10-18). The check skips it. वार्त्ता (from वृत्ति) is the same case; gold writes वार्ता every time.
+- **Found (2026-10-18):** 39 places in gold, 24 of them कार्त्तिक. Beyond gold, about 500 places in 120 files, most of them in Vālmīki Ayodhyā, Rāmāyaṇa-ratnākara and the Padma sources (र्त्त, र्य्य, र्ल्ल, र्म्म, र्द्द, र्प्प).
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
