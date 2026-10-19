@@ -104,6 +104,19 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Question:** does a line in gold that quotes the Gītā (the super-gold reference; any other text can be passed as REF) read as the Gītā does? Every line is compared with every Gītā line, spaces ignored, and a line of similarity 0.85 or more that is not identical is reported.
 - **Found (2026-10-19):** 42 lines quote the Gītā exactly (20 in the Gītā Māhātmya, 8 in the Viṣṇusahasranāma, 8 in Padma Ekādaśī). Only two near-misses, both echoes rather than quotations: Padma Ekādaśī न लिप्यते स पापेन (Gītā 5.10 लिप्यते न स) and Virāṭa 77.35 …भुङ्क्ष्व राज्यं समग्रं (Gītā 11.33 समृद्धम्).
 
+### 16. A free word in -त् run into a त/थ-word (`tjoin.py`)
+- **Question:** is a word that ends in -त् and stands on its own (स्यात्, भवेत्, चेत्, तत्, यत्, एतत्, तस्मात्, पश्चात्, किञ्चित् …) written joined to a following त- or थ-word (स्यात्त्वद्भक्तिमतां)? House style writes it apart.
+- **Why the split check missed it:** `style.py` splits at त्त/त्थ (and न्त, त्व, द्ध …) only when gold attests the exact pair apart, since those clusters are usually word-internal (तत्त्व, महत्तत्त्वं). A rare right-hand word therefore never got split. This check keys on the left-hand word instead.
+- **Not flagged:** तत्त्व, तत्तद्/तत्तन्, तत्तुल्य, पश्चात्ताप, Virāṭa's यत्ता “ready”, names (यत्तदीया, यत्तच्छब्दस्वरूपिणी).
+- **Found (2026-10-19):** 71 places in gold (raised by the editor from Paraśurāma's stotra); gold writes these words apart far more often than joined (भवेत् 46 : 0, तस्मात् 36 : 2, यत् 77 : 10).
+
+### 17. Any consonant-final free word run into the next (`freeword.py`)
+- **Question:** the general form of 16. Gold itself decides which words are free: a surface form L ending in a virama (भवेद्, साक्षाद्, यावद्, केचित्, तान्, श्रीमान्) is free when gold has it on its own at least 4 times and at least 4 times as often as run into a following known word. A target token that splits as free L + known word is a candidate.
+- **Vowel-final words are not checked.** Asked for राजा राम: before a consonant a vowel-final word cannot fuse without a vowel sandhi, and every joined राजा-, यदा-, तदा- in gold was one (राजावदत् = राजा + अवदत्, यदागन्तुं = यदा + आगन्तुं).
+- **A candidate list, to be read** (about a third real). Drop inflected words that happen to split (भवान्या, जपन्तं, महान्तौ), compounds (स्वयम्भू, महत्तत्त्व, स्फुरत्कुण्डल, धिक्कृ, प्रत्यक्परोक्ष, सकृत्स्मरण), -न् doubled before a vowel (राजन्नेतावत्, पश्यन्नात्मनि), त्→न् nasal sandhi (घोरान्मुच्यते) and त् + ह = द्ध (कुर्याद्धरिः), which stay joined.
+- **-न् before न/म:** gold writes it apart 478 times and joined 19 (mostly जीवन्मुक्त), so those are split too.
+- **Found (2026-10-19):** 71 more in gold beyond 16 (Phase B round 9, rows 72–142), most in pairs between the Adhyātma Rāmāyaṇa and the stotras taken from it.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
@@ -147,6 +160,7 @@ Each of these finds one word in two forms. One form is chosen and the other is c
 - **Fix every copy.** When fixing a typo, grep the whole corpus for it. Copies of the same stotra and the source text (the Śānti parva for the Bhīṣmastavarāja) often share the slip.
 - **Grammar is not the arbiter for epic text; the source edition (mūlam) is.** Epic and purāṇic texts keep non-Pāṇinian (ārṣa) forms. Virāṭa 5.36 reads ऋजुर्मृदुः सत्यवादो: the ऋदु for ऋजु was a typo, but सत्यवादो (not सत्यवादी) is the mūlam's reading. When the unproofread OCR copy has the same reading, flag the row as "your call" and ask for a check against the source edition.
 - **For a line that is too short, look for an outside copy.** sanskritdocuments.org has many of these texts, including the Adhyātma Rāmāyaṇa (`/doc_raama/adhyaatmaRamAyo.html` for Ayodhyā). Three "off by 2+" lines turned out to have dropped words that the outside copy kept (सुमन्त्रं **मन्त्रिसत्तमम्**, क्रमेण **स्फुटम्**, भस्मसितं **सितं** च). If the outside copy has the same irregular metre, the received text is irregular: record the verse as correct.
+- **Read the edition's footnotes before proposing a fix.** Some texts carry the print's apparatus as `\footnotemark`/`\footnotetext`: variant readings (इत्यपि पाठः) and notes such as सन्धिरार्षः, which says that an odd-looking sandhi (अथो ऽन्यैः, Śivarātri-māhātmya) is the edition's own. The checkers also see a word with `\footnotemark` or `\-` (a TeX hyphenation point) inside it as two words: गन्धपूजा\footnotemark{}दिभिः and श्री\-शङ्कर\-भगवत्पादा\-चार्या\-णाम् are each one word, not a split to fix.
 - **Measure on a known pair.** Virāṭa Parva exists as OCR (`-orig`) and as proofread text. `proof.py eval ORIG FIXED` gives real recall figures to test a new check against.
 
 ## Running it on a new text

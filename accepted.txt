@@ -506,3 +506,7 @@ meter: मनोज्ञरम्भावनखण्डखण्डिता�
 meter: पुन्नागनीलोत्पलकुन्दजाती-  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
 meter: ततो भवन्तं कतमोऽपि देव  # metre pass 2026-10-17: Upajāti mix / ārṣa, no small fix
 meter: जयदेवेन खड्गबाहोः प्रीत्या नीतो महीभुजा  # B6-119 reviewed: Gītā Māhātmya adhyāya 191, verse 12, 17-syllable line kept
+तत्तटे  # B9-68: “on its bank”, kept joined
+तत्तादृङ्मम  # B9-69: kept joined
+तत्तादृशफलाप्तये  # B9-70: kept joined
+तत्तादृशा  # B9-71: kept joined
