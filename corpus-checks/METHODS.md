@@ -95,6 +95,15 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Question:** before a stop, does gold write the anusvāra (संग, कंठ) in some words and the class nasal (सङ्ग, कण्ठ) in others? Words are keyed with the nasal folded to ं, and a key written both ways is reported.
 - **Found (2026-10-18):** nothing. Gold writes the class nasal 22,384 times. The anusvāra appears only in संज्ञा and its compounds (as in the Gītā), and in Hindi बंदि (Hanumān Chālīsā).
 
+### 14. A word typed twice (`repeat.py`)
+- **Question:** is a word written twice running, inside a line or across a line break within a verse? Doubling is usually meant (कुञ्जे कुञ्जे, निशि निशि, पुनः पुनः), so each pair carries how often that doubling occurs across the whole corpus, and the rare ones are listed first.
+- **Skipped:** blank lines and speaker lines (\uvacha), so the last word of one verse and the first of the next (…परः पतिः / पतिः सुराणां is within a verse and stays) do not pair.
+- **Found (2026-10-19):** 442 doublings in gold, none a slip; all intended repetition or anadiplosis.
+
+### 15. A quotation that differs from its source (`quotes.py`)
+- **Question:** does a line in gold that quotes the Gītā (the super-gold reference; any other text can be passed as REF) read as the Gītā does? Every line is compared with every Gītā line, spaces ignored, and a line of similarity 0.85 or more that is not identical is reported.
+- **Found (2026-10-19):** 42 lines quote the Gītā exactly (20 in the Gītā Māhātmya, 8 in the Viṣṇusahasranāma, 8 in Padma Ekādaśī). Only two near-misses, both echoes rather than quotations: Padma Ekādaśī न लिप्यते स पापेन (Gītā 5.10 लिप्यते न स) and Virāṭa 77.35 …भुङ्क्ष्व राज्यं समग्रं (Gītā 11.33 समृद्धम्).
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
