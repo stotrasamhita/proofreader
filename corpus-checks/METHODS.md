@@ -117,6 +117,12 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **-न् before न/म:** gold writes it apart 478 times and joined 19 (mostly जीवन्मुक्त), so those are split too.
 - **Found (2026-10-19):** 71 more in gold beyond 16 (Phase B round 9, rows 72–142), most in pairs between the Adhyātma Rāmāyaṇa and the stotras taken from it.
 
+### 18. Word junctions learnt from hand fixes (`junctions.py`)
+- **Origin:** the editor's 23 hand fixes to the Padma Ekādaśī (Indirā, Śravaṇa-dvādaśī), 2026-10-19, none of which the earlier checks caught. Four kinds: a compound written apart (श्रद्धा समन्वितः), a word run into the next (अद्यस्थित्वा, अयत्नात्समवाप्नोति), an avagraha missing (यशसान्वितः, चासने), a dropped visarga (कृताञ्जलि).
+- **Correction to 17:** vowel-final words *can* fuse to a consonant-initial word with no sandhi (अद्य + स्थित्वा). What held for राजा, यदा, तदा was only that their joined forms in gold were vowel sandhi.
+- **Scoring:** run on the file as it was before the fixes (with that file left out of the counts), the four checks find 13 of the 23. The misses are compounds whose members gold rarely has (एकादशी दिने, अधोयोनि गतानां) and avagrahas whose right-hand word gold lacks (चासने). Precision on gold is in the script's docstring.
+- **Found (2026-10-19):** 233 rows (Phase B round 10): 163 run together, 62 avagraha, 5 compounds, 3 visarga.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
