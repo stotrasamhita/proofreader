@@ -85,6 +85,16 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Not a slip:** कार्त्तिक(ेय) is from कृत्तिका, so the त्त is etymological. Gold writes it both ways (24 doubled, 27 single), and the editor ruled both correct and not to be standardised (round B7, 2026-10-18). The check skips it. वार्त्ता (from वृत्ति) is the same case; gold writes वार्ता every time.
 - **Found (2026-10-18):** 39 places in gold, 24 of them कार्त्तिक. Beyond gold, about 500 places in 120 files, most of them in Vālmīki Ayodhyā, Rāmāyaṇa-ratnākara and the Padma sources (र्त्त, र्य्य, र्ल्ल, र्म्म, र्द्द, र्प्प).
 
+### 12. Sandhi left unmade between two words (`sandhi.py`)
+- **Question:** a word written apart from the next one keeps a final sound that sandhi should have changed. The cases are: -अः before a voiced sound (रामः गच्छति), -आः or -इः etc. before a vowel or voiced consonant, सः before a consonant, a visarga before च छ त थ ट ठ (नमः त्रि-), -त्/-क् before a voiced sound (कदाचित् गौतमी), and -म् before a consonant inside a line.
+- **Skipped:** a space at a pāda break, where pausa is allowed (within one syllable of the midpoint, on lines of 14+ syllables), and comments.
+- **False hits to drop by eye:** prose colophons and credits (…शास्त्रिभिः विरचितं), fixed formulas (नमः इदमर्घ्यम्, श्रौषट् वौषट्, viniyoga lines such as श्रीविष्णुः ऋषिः).
+- **Found (2026-10-18):** 41 hits in gold, of which about 20 are slips (पठेत् भक्ति-, विलसत् गोपी- in two copies of the same verse, त्रिशाखैः बिल्व-). Reading them also turned up शरैरर्पितः ऋद्धः (probably क्रुद्धः) and विदिक्षुः दिक्षु.
+
+### 13. Anusvāra against the class nasal inside a word (`nasal.py`)
+- **Question:** before a stop, does gold write the anusvāra (संग, कंठ) in some words and the class nasal (सङ्ग, कण्ठ) in others? Words are keyed with the nasal folded to ं, and a key written both ways is reported.
+- **Found (2026-10-18):** nothing. Gold writes the class nasal 22,384 times. The anusvāra appears only in संज्ञा and its compounds (as in the Gītā), and in Hindi बंदि (Hanumān Chālīsā).
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.
