@@ -519,3 +519,40 @@ meter: जयदेवेन खड्गबाहोः प्रीत्य�
 मनसानुचिन्तयन्  # B10 reviewed: kept as written
 ददर्शात्रेः  # B10 reviewed: kept as written
 नादाय  # B10 reviewed: kept as written
+कौण्डण्य  # C1-66 reviewed: kept as printed
+प्रहास्य  # C1-68 reviewed: kept as printed
+बहुन्  # C1-68 reviewed: kept as printed
+वियोगसंयोगजन्म  # C1-75 reviewed: kept as printed
+meter: नष्टे लोके द्विपरार्धावसाने  # C1-97 reviewed: kept as printed
+meter: मर्त्यो मृत्युव्यालभीतः पलायन्  # C1-98 reviewed: kept as printed
+meter: स त्वं घोरादुग्रसेनात्मजान्नस्  # C1-99 reviewed: kept as printed
+meter: विश्वं यदेतत्स्वतनौ निशान्ते  # C1-100 reviewed: kept as printed
+meter: मासि भाद्रपदेऽष्टम्यां निशीथे कृष्णपक्षके  # C1-101 reviewed: kept as printed
+meter: जगाम सूतिकागेहं देवक्याः प्रस्खलन् पथि  # C1-102 reviewed: kept as printed
+meter: न केवलं मे भवतश्च राजन्स वै बलं बलिनां चापरेषाम्  # C1-104 reviewed: kept as printed
+meter: मनवः प्रजानां पतयो गन्धर्वाप्सरचारणाः  # C1-105 reviewed: kept as printed
+meter: यो नो गतिं योगसिद्धामसाधुरहार्षीद्योगतपोबलेन  # C1-106 reviewed: kept as printed
+meter: नाहं बिभेम्यजित तेऽतिभयानकास्य  # C1-107 reviewed: kept as printed
+meter: एवं जनं निपतितं प्रभवाहिकूपे  # C1-108 reviewed: kept as printed
+meter: तत्तेऽर्हत्तम नमः स्तुतिकर्मपूजाः  # C1-109 reviewed: kept as printed
+meter: नानात्मवन्तस्तु वने चरन्ति  # C1-110 reviewed: kept as printed
+meter: एकस्य धर्मेण सतां मतेन  # C1-111 reviewed: kept as printed
+meter: सतां सदा शाश्वतधर्मवृत्तिः  # C1-112 reviewed: kept as printed
+meter: सन्तो हि सत्येन नयन्ति सूर्यं  # C1-113 reviewed: kept as printed
+meter: न च प्रसादः सत्पुरुषेषु मोघो  # C1-114 reviewed: kept as printed
+meter: तथा प्रशस्य ह्यभिपूज्य चैव  # C1-115 reviewed: kept as printed
+meter: नमो नमस्ते गुरवे महात्मने  # C1-117 reviewed: kept as printed
+meter: स्वाराज्य-साम्राज्य-विभूतिरेषा  # C1-118 reviewed: kept as printed
+meter: वेदान्तोदर-वर्ति भास्वदमलं ध्वान्त-च्छिदस्मद्-धियः  # C1-119 reviewed: kept as printed
+meter: तेनापि देवता दृष्टा जनानां वचनं श्रुतम्  # C1-121 reviewed: kept as printed
+meter: अवैष्णवे च यत्पापं यत्पापं दाम्भिके जने  # C1-122 reviewed: kept as printed
+meter: असच्छास्त्रार्थनिपुणज्ञपुराणार्थविवर्जिते  # C1-123 reviewed: kept as printed
+meter: निर्विघ्ने तु कार्याणि कथं सिध्यन्ति सूतज  # C1-125 reviewed: kept as printed
+meter: तं पादमूले पतितं स्वपुत्रं  # C1-126 reviewed: kept as printed
+meter: तत्कण्ठरत्नज्वलमानरूपी  # C1-127 reviewed: kept as printed
+meter: समागतोऽयं हरिदश्वदीधिति  # C1-128 reviewed: kept as printed
+meter: यदा यदा पश्यति कार्यमुत्थितं  # C1-129 reviewed: kept as printed
+meter: शरण्ये त्रिजगद्वन्द्ये विष्णुवक्षस्थलस्थिते  # C1-130 reviewed: kept as printed
+meter: भक्त्या करोति विपुलान्  # C1-131 reviewed: kept as printed
+meter: स श्लाघ्यः स कुशलम्बी च स शूरः स च पण्डितः  # C1-132 reviewed: kept as printed
+meter: इति प्रपन्नां शरणं द्विजाङ्गना-  # C1-116 reviewed: Vaṃśastha lines 1 and 3, Indravajrā/Upendravajrā lines 2 and 4, kept
