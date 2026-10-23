@@ -122,12 +122,18 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Correction to 17:** vowel-final words *can* fuse to a consonant-initial word with no sandhi (अद्य + स्थित्वा). What held for राजा, यदा, तदा was only that their joined forms in gold were vowel sandhi.
 - **Scoring:** run on the file as it was before the fixes (with that file left out of the counts), the four checks find 13 of the 23. The misses are compounds whose members gold rarely has (एकादशी दिने, अधोयोनि गतानां) and avagrahas whose right-hand word gold lacks (चासने). Precision on gold is in the script's docstring.
 - **Found (2026-10-19):** 233 rows (Phase B round 10): 163 run together, 62 avagraha, 5 compounds, 3 visarga.
+- **Found (2026-10-22, Phase C round 3):** on the kathas, check C gave 287 candidates; read by hand, 112 were real (46 ाऽ, 66 ाऽऽ) and 116 of 119 rows were accepted. Its ऽ/ऽऽ choice is a guess: it proposed ऽऽ for a+a (गृहाणाऽऽर्घ्यं) and ऽ for ā+ā (श्रुत्वाऽकाशवाणी). Read every row; most false hits are a+a, inflections (मानवान्, नीतानि), -āḥ before a consonant (देव्यास्तु) and compounds (सर्वदान-, मातापितृ-).
 
 ### 19. A nāmāvalī against its stotram (`namastotra.py`)
 - **Question:** does each name of a nāmāvalī (dative + नमः) appear, in order, in the gold stotram it comes from? Each name is cut to a stem (रामाय → राम, तुलस्यै → तुलस, विष्णवे → विष्ण) and looked for in the stotram's letters with spaces, dandas and TeX removed, so names inside compounds and sandhi are found. A vowel-initial stem is matched from its second letter (सुगन्धिन्यमृतोद्भवा), and a stem found elsewhere in the stotram counts as found out of order.
 - **Pairing:** each nāmāvalī goes with the gold stotram that contains most of its stems. At 85%+ the pair is sound (23 of the 45 108s, and most sahasranāmas); below, the nāmāvalī is another recension (Durgā 108: 78%) or has no stotram in gold.
 - **Counts:** the \devanumber marks every ten names locate a dropped or merged name to its decade (Nṛsiṃha 108 has a "---" placeholder; Gakārādi 1000 lost गीर्भूमये). Beware \mbox{नमः…}: strip TeX before counting.
 - **Found (2026-10-20, Phase D round 1):** 13 slips in the nāmāvalīs (भुज for बुज, वाल for बाल, अहिर्बुध्न्याय for अहये बुध्न्याय, स्थितिसंहारकारिण्यै), 11 differences for the editor, and 6 slips in the gold stotras themselves (चतुर्थातिथि, गमानादि, तारकोऽच्छिदः), which the comparison reaches from the other side.
+
+### 20. A text against a parallel recension (`parallel.py`)
+- **Question:** where a non-gold text retells a gold one (the Vrata-rāja Ekādaśī māhātmya and the Padma Purāṇa's), which of its words are OCR damage? Each verse line of A is normalised (no spaces, avagraha, dandas, TeX), matched to B's most similar line through shared character trigrams, and scored with difflib.
+- **Rows:** in lines scoring 0.75–0.99, a word-level diff; a differing stretch is a likely slip when A has a word gold never has, B only words gold knows, and the two differ by a few letters (at most 2, or a sixth of the length), and neither is the other plus a prefix or particle. A second pass looks inside longer differing stretches for single words that meet the same test. Everything else is a variant reading: counted, not proposed (source choice is the editor's).
+- **Found (2026-10-22, Phase C round 4):** Vrata-rāja, 2,903 lines: 1,823 with a parallel (409 identical); 517 likely slips (राजः → राज्ञः, वृतोदर → वृकोदर, पाएं → पापं), 931 variant stretches, 1,080 lines with no parallel. Builder: `review/phaseC/build_c4.py`.
 
 ## Checks for consistency (the same word written two ways)
 

@@ -556,3 +556,4 @@ meter: शरण्ये त्रिजगद्वन्द्ये वि�
 meter: भक्त्या करोति विपुलान्  # C1-131 reviewed: kept as printed
 meter: स श्लाघ्यः स कुशलम्बी च स शूरः स च पण्डितः  # C1-132 reviewed: kept as printed
 meter: इति प्रपन्नां शरणं द्विजाङ्गना-  # C1-116 reviewed: Vaṃśastha lines 1 and 3, Indravajrā/Upendravajrā lines 2 and 4, kept
+तथायुतम्  # C3-44 reviewed: kept as printed (Śrāvaṇa 5229)
