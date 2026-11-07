@@ -557,3 +557,13 @@ meter: भक्त्या करोति विपुलान्  # C1-131 
 meter: स श्लाघ्यः स कुशलम्बी च स शूरः स च पण्डितः  # C1-132 reviewed: kept as printed
 meter: इति प्रपन्नां शरणं द्विजाङ्गना-  # C1-116 reviewed: Vaṃśastha lines 1 and 3, Indravajrā/Upendravajrā lines 2 and 4, kept
 तथायुतम्  # C3-44 reviewed: kept as printed (Śrāvaṇa 5229)
+वैखानसस्तदा  # C4-15 reviewed: kept as printed (Vrata-rāja; Padma वैखानसस्तथा)
+सफलायां तथाऽनघ  # C4-20 reviewed: kept as printed (Vrata-rāja; Padma सफलायास्तथाऽनघ)
+मुरनामा हि  # C4-6 reviewed: kept as printed (Vrata-rāja; Padma मुरनामेति)
+महारौद्रः  # C4-7 reviewed: kept as printed (Vrata-rāja; Padma महारौद्र)
+प्रीयन्ताम्  # E1-54 reviewed: kept (नान्दीमुखाः पितरः प्रीयन्ताम्, Kāśī-yātrā)
+नेत्रावत्यादि  # E1-55 reviewed: kept (Gaṅgā-kalpa pūjā saṅkalpa)
+ओङ्कारममलेश्वरे  # E1-59 reviewed: kept as printed (Dvādaśa-jyotirliṅga)
+गङ्गातरङ्गकमनीयजटाकलापं  # E1-61 reviewed: kept as printed (Viśvanāthāṣṭakam)
+स्वर्गसोपानगङ्गे  # E1-69 reviewed: kept (Gaṅgāṣṭakam)
+मातर्जाह्नवि  # E1-71 reviewed: kept (Gaṅgāṣṭakam; the book मातः शाम्भवि)
