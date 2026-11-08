@@ -580,3 +580,4 @@ meter: इति प्रपन्नां शरणं द्विजाङ�
 पीताम्बरधराः  # C4-198 reviewed: kept as printed (Vrata-rāja; Padma पीताम्बरधरा)
 दुष्टास्ते  # C4-206 reviewed: kept as printed (Vrata-rāja; Padma मुष्टास्ते)
 योगक्षेमो  # C4-230 reviewed: kept as printed (Vrata-rāja; Padma योगः क्षेमो)
+व्रतप्रभावेण  # C4-536 sign-off: line 888 keeps -ण (the other three now -प्रभावेन); both forms are in the Gītā
