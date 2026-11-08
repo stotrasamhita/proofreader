@@ -23,8 +23,10 @@ INDEX_VERSION = 4
 
 
 def root_dir():
-    """The StotraSamhita root: the parent of the proofreader directory."""
-    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    """Where the texts live: $PROOF_ROOT (a folder of fetched repos, see
+    fetch.py), else the StotraSamhita root, the parent of the proofreader."""
+    return os.path.abspath(os.environ.get('PROOF_ROOT')
+                           or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def tool_dir():
@@ -84,6 +86,7 @@ class Index:
         self.ctx_total = Counter()       # context h -> sum of counts of h+x
         self.ctx_types = Counter()       # context h -> number of distinct x seen after h
         self.files = {}                  # rel path -> {'sha', 'rev', 'words': Counter}
+        self.source = 'texts'            # or 'snapshot:<sha1 of gold-index.json.gz>'
         self._deletes = None
 
     # -- building -----------------------------------------------------------
@@ -160,6 +163,11 @@ class Index:
 
     # -- persistence --------------------------------------------------------
 
+    # The pickle under index/ is local: built from the gold texts (`build`), or,
+    # on a checkout without them, from gold-index.json.gz (golddb.py), the
+    # snapshot that travels with the repo. One built from the texts is never
+    # replaced by the snapshot; one built from the snapshot follows it.
+
     @staticmethod
     def default_path():
         return os.path.join(tool_dir(), 'index', 'gold.pkl.gz')
@@ -174,13 +182,28 @@ class Index:
 
     @classmethod
     def load(cls, path=None):
+        from . import golddb
         path = path or cls.default_path()
-        if not os.path.exists(path):
-            raise SystemExit(f'No index at {path}; run `proof.py build` first.')
-        with gzip.open(path, 'rb') as f:
-            idx = pickle.load(f)
-        if getattr(idx, 'version', None) != INDEX_VERSION:
-            raise SystemExit('Index format is out of date; run `proof.py build`.')
+        db_sha = golddb.sha() if path == cls.default_path() else None
+        idx = None
+        if os.path.exists(path):
+            with gzip.open(path, 'rb') as f:
+                idx = pickle.load(f)
+            src = getattr(idx, 'source', 'texts')
+            if getattr(idx, 'version', None) != INDEX_VERSION:
+                if src == 'texts':
+                    raise SystemExit('Index format is out of date; run `proof.py build`.')
+                idx = None
+            elif src != 'texts' and src != f'snapshot:{db_sha}':
+                idx = None               # built from an older snapshot: rebuild from this one
+        if idx is None:
+            if not db_sha:
+                raise SystemExit(f'No index at {path} and no {golddb.DB}; run `proof.py build`.')
+            idx = golddb.read(cls)
+            idx.source = f'snapshot:{db_sha}'
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with gzip.open(path, 'wb') as f:
+                pickle.dump(idx, f, protocol=pickle.HIGHEST_PROTOCOL)
         return idx
 
     # -- leave-one-out ------------------------------------------------------
@@ -202,7 +225,7 @@ class Index:
         out = []
         for p, meta in self.files.items():
             ap = os.path.join(root_dir(), p)
-            if not os.path.exists(ap) or _sha(ap) != meta['sha']:
+            if os.path.exists(ap) and _sha(ap) != meta['sha']:     # absent: not fetched
                 out.append(p)
         return out
 

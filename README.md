@@ -19,6 +19,40 @@ directories (`../stotra-sangrahah`, `../Mahabharatam`, `../verse-checker`, …).
 ./proof.py approve ../puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/40-utpanna.tex
 ```
 
+## Without the StotraSamhita repos
+
+The proofreader checkout alone is enough. `gold-index.json.gz` (about 2 MB) holds
+what the checks need from gold: per-file word counts, spellings and word pairs.
+The texts themselves are not needed.
+
+```sh
+./proof.py setup        # once: fetches verse-checker into vendor/, builds index/ from gold-index.json.gz
+./proof.py check gh:stotrasamhita/stotra-sangrahah:stotras/nadi/GangaStotram.tex
+./proof.py check https://github.com/OWNER/REPO/blob/BRANCH/path/to/file.tex
+./proof.py round gh:OWNER/REPO@v1.2:chapters --id R1 --out round-R1.json
+./proof.py review round-R1.json        # or: proof.py site round-R1.json --out DIR
+./proof.py apply R1                    # edits the fetched copy: git -C work/REPO diff
+```
+
+A source is `gh:OWNER/REPO[@REF][:PATH]` (a file, a folder, or the whole repo)
+or a GitHub link to one. It is fetched into `work/REPO/` as a shallow clone of
+just the .tex/.txt/.md files asked for. A round built from it records `work/` as
+its root, so `review` and `apply` find the files again. Private repos work
+wherever git is signed in to GitHub. A fetched copy with local edits is used as it
+is, never re-fetched over.
+
+`gold-index.json.gz` is a snapshot, refreshed by hand at a meaningful point,
+for example a gold tag or a closed round, not on every build:
+
+```sh
+./proof.py gold-index --label gold-2026-11-08   # from each gold repo's committed HEAD
+```
+
+It reads committed `HEAD` only, never a working tree, warns about unpushed
+commits, and records each repo's commit. `proof.py build` touches only your
+local `index/`. A local index built from the texts is never replaced by the
+snapshot; on a checkout without the texts, the local index follows the snapshot.
+
 ## Review in the browser
 
 ```sh

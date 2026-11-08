@@ -51,6 +51,16 @@ def load_rounds(path, round_id=None):
     return title, rounds
 
 
+def use_root(path):
+    """A round built from fetched files records its root (work/); make it the
+    root for this run unless PROOF_ROOT is already set."""
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    root = data.get('root') if isinstance(data, dict) else None
+    if root and not os.environ.get('PROOF_ROOT'):
+        os.environ['PROOF_ROOT'] = os.path.join(tool_dir(), root)
+
+
 def _rel(path):
     return os.path.relpath(os.path.abspath(path), tool_dir())
 

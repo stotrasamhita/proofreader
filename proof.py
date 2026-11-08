@@ -2,12 +2,15 @@
 """Proofread StotraSamhita texts against a gold (already proofread) corpus.
 
   proof.py build                     rebuild the index from gold.txt
-  proof.py check FILE...             report likely errors in FILEs
+  proof.py setup                     first run on a bare checkout: verse-checker + index
+  proof.py check FILE...             report likely errors in FILEs (or gh:OWNER/REPO[@REF][:PATH])
+  proof.py round FILES --id R1 --out round-R1.json   the flags as a review round
   proof.py selfcheck                 check every gold file against the rest
   proof.py eval ORIG FIXED           measure recall on a before/after pair
   proof.py accept WORD...            mark words as valid (never flag again)
   proof.py accept --verse 'FIRST LINE'  mark a verse's metre as valid
   proof.py approve FILE...           add proofread files to gold.txt, rebuild
+  proof.py gold-index [--label L]    refresh the shipped gold snapshot (from committed gold)
   proof.py style FILE|DIR... [--apply mechanical|all]   house-style issues / bulk fixes
   proof.py dupes [FILES] [--scope gold|all]   same verse elsewhere with a different reading
   proof.py edits [FILES] --out X.csv  proposed style edits to cherry-pick (approve column)
@@ -74,8 +77,8 @@ def run_checks(paths, args):
     findings = []
     for p in paths:
         if rel(p) in stale:
-            print(f'warning: {rel(p)} changed since the index was built; '
-                  'run `proof.py build`', file=sys.stderr)
+            print(f'warning: {rel(p)} differs from its copy in the gold index (checked '
+                  'against the rest of gold; `proof.py build` if you have the gold texts)', file=sys.stderr)
         findings += session.check(p, args.threshold, args.style)
     session.close()
     return findings
@@ -86,8 +89,17 @@ def cmd_build(args):
     Index.build(paths).save()
 
 
+def inputs(args):
+    """Files to work on: local paths or GitHub sources (fetched into work/)."""
+    from proofreader.fetch import resolve
+    paths, fetched = resolve(args.files, log=lambda m: print(m, file=sys.stderr))
+    for src, commit in fetched:
+        print(f'{src} at {commit[:10]}', file=sys.stderr)
+    return expand_paths(paths), fetched
+
+
 def cmd_check(args):
-    files = expand_paths(args.files)
+    files, _ = inputs(args)
     findings = run_checks(files, args)
     print_findings(findings, args.format, args.sort)
     summarize(findings, len(files))
@@ -115,7 +127,7 @@ def cmd_style(args):
     """List house-style issues; --apply writes the fixes into the files."""
     from proofreader.session import replace_word
     session = Session(meter=False)
-    files = expand_paths(args.files)
+    files, _ = inputs(args)
     wanted = set(args.rules.split(',')) if args.rules else None
     found, applied, failed, shown = Counter(), Counter(), [], []
     for p in files:
@@ -217,7 +229,7 @@ def cmd_splits(args):
 
 def cmd_serve(args):
     from proofreader.server import serve
-    serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
+    serve(inputs(args)[0], args.host, args.port, meter=not args.no_meter)
 
 
 def _show(path):
@@ -246,8 +258,9 @@ def _import(rounds_path, rounds, decisions_dir, sources):
 
 def cmd_review(args):
     """Serve the shared review page for a round file; decisions go to decisions/<round>.json."""
-    from proofreader.rounds import load_rounds
+    from proofreader.rounds import load_rounds, use_root
     from proofreader.roundserver import serve
+    use_root(args.rounds)
     title, rounds = load_rounds(args.rounds, args.round)
     if args.title:
         title = args.title
@@ -257,7 +270,8 @@ def cmd_review(args):
 
 
 def cmd_import(args):
-    from proofreader.rounds import load_rounds
+    from proofreader.rounds import load_rounds, use_root
+    use_root(args.rounds)
     _import(args.rounds, load_rounds(args.rounds, args.round)[1], args.decisions, args.sources)
 
 
@@ -314,16 +328,18 @@ def cmd_apply(args):
     """Apply a round reviewed with `proof.py review`: mis-click check, the
     accepted edits, split labels, and rejects to accepted.txt. Decisions
     already applied are skipped, so a round can be applied as it goes."""
-    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corpus-checks'))
-    import apply_round
-    import misclick
-    from proofreader.rounds import DecisionFile, load_rounds
+    from proofreader.rounds import DecisionFile, load_rounds, use_root
     df = DecisionFile(args.round, directory=args.decisions)
     if not os.path.exists(df.path):
         sys.exit(f'no decisions file {df.path}; review the round first (proof.py review ROUND.json)')
     rows_path = args.rows or df.rows_path
     if not rows_path or not os.path.exists(rows_path):
         sys.exit(f'{df.path}: its round file {rows_path!r} is missing; pass --rows')
+    use_root(rows_path)               # before apply_round, which reads the root on import
+    print(f'texts in {root_dir()}')
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corpus-checks'))
+    import apply_round
+    import misclick
     R = {r['id']: r for r in load_rounds(rows_path, args.round)[1][0]['rows']}
     if args.skip:
         df.mark_applied(int(i) for i in args.skip.split(','))
@@ -374,9 +390,131 @@ def cmd_apply(args):
     for k in keeps:
         print('  kept', k)
     df.mark_applied(set(D) - held)
+    if os.environ.get('PROOF_ROOT'):
+        for repo in sorted({R[i]['file'].split('/')[0] for i in D}):
+            print(f'edits are in a fetched copy: git -C {os.path.join(root_dir(), repo)} diff')
     if held:
         print(f'{len(held)} row(s) not applied: {",".join(map(str, sorted(held)))}. Edit them by hand '
               f'and mark them done with --skip, or re-run to retry them.')
+
+
+def cmd_gold_index(args):
+    """Refresh gold-index.json.gz, the gold snapshot that ships with the repo."""
+    from proofreader import golddb
+    before = golddb.info() if os.path.exists(golddb.DB) else {'files': 0, 'repos': {}}
+    old = set(golddb.read(Index).files) if before['files'] else set()
+    idx, revs, warn = golddb.snapshot(Index, args.label)
+    for w in warn:
+        print('warning: ' + w)
+    new = set(idx.files)
+    print(f'{golddb.DB}: {len(new)} files ({len(new - old)} added, {len(old - new)} removed) from '
+          + ', '.join(f'{r}@{c}' for r, c in revs.items()))
+    for p in sorted(new - old):
+        print('  + ' + p)
+    for p in sorted(old - new):
+        print('  - ' + p)
+    print('commit it with a note of why now (a gold tag, a closed round).')
+
+
+def cmd_setup(args):
+    """What a checkout of the proofreader alone needs: verse-checker and the index."""
+    import subprocess
+    from proofreader.meter import VERSE_CHECKER_URL, verse_checker
+    vc = verse_checker()
+    if vc:
+        print(f'verse-checker: {vc}')
+    else:
+        dest = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor', 'verse-checker')
+        print(f'fetching verse-checker into {dest} …')
+        subprocess.run(['git', 'clone', '-q', '--depth', '1', VERSE_CHECKER_URL, dest], check=True)
+    from proofreader import golddb
+    idx = Index.load()                   # builds the local cache from gold-index.json.gz
+    if idx.source == 'texts':
+        print('gold index: built from the gold texts here (proof.py build)')
+    else:
+        i = golddb.info()
+        print('gold snapshot' + (f' {i["label"]}' if i['label'] else '') + ': '
+              + ', '.join(f'{r}@{c}' for r, c in i['repos'].items()))
+    print(f'gold index: {len(idx.files)} files, {len(idx.words):,} distinct words. Ready:\n'
+          '  proof.py check gh:OWNER/REPO[@REF][:PATH]\n'
+          '  proof.py round gh:OWNER/REPO:PATH --id R1 --out round-R1.json')
+
+
+def cmd_fetch(args):
+    from proofreader.fetch import resolve
+    for p in resolve(args.files)[0]:
+        print(p)
+
+
+def _verse_rows(path, rp, findings, meter):
+    """Whole-verse rows for metre findings, as the review page shows them:
+    every pāda editable, the printed verse with the syllables to look at marked."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corpus-checks'))
+    import versenum
+    from proofreader.checks import verse_ok
+    from proofreader.meter import by_position, mark
+    units = {u.lines[0].lineno: u for u in parse_file(path) if u.kind == 'verse'}
+    out = []
+    for f in findings:
+        u = units.get(f.line)
+        if not u:
+            continue
+        lines = [l.text for l in u.lines]
+        ok, r = verse_ok(lines, meter)
+        pats, hint = r['patterns'], r.get('hint', '')
+        soft = by_position(lines, pats, hint)
+        shown = mark(lines, pats, hint, '\x01', '\x02', {i: set(v) for i, v in soft.items()}, '\x03', '\x04')
+        try:
+            vnum = versenum.label(rp, f.line)
+        except (OSError, UnicodeDecodeError):
+            vnum = ''
+        dev = vnum.translate(str.maketrans('0123456789', '०१२३४५६७८९'))
+        shown = [x.strip() for x in shown]
+        if len(shown) > 1:
+            shown[len(shown) // 2 - 1] += ' ।'
+        shown[-1] += f' ॥ {dev} ॥' if dev else ' ॥'
+        out.append({'category': 'meter', 'rule': 'meter', 'file': rp, 'line': f.line, 'occ': 0,
+                    'lines': [l.lineno for l in u.lines], 'current': '\n'.join(l.strip() for l in lines),
+                    'proposed': '\n'.join(l.strip() for l in lines), 'context': ' / '.join(lines),
+                    'note': ' · '.join(x for x in f.reasons if not x.startswith(('at:', '‹›'))),
+                    'vnum': vnum, 'shown': '\n'.join(shown), 'score': f.score})
+    return out
+
+
+def cmd_round(args):
+    """Check files and write the flags as a review round (word and metre rows)."""
+    from proofreader.index import tool_dir
+    files, fetched = inputs(args)
+    session = Session(meter=not args.no_meter)
+    rows = []
+    for p in files:
+        rp = rel(p)
+        fs = session.check(p, args.threshold)
+        with open(p, encoding='utf-8', errors='replace') as fh:
+            raw = fh.read().split('\n')
+        for f in fs:
+            if f.kind == 'word':
+                rows.append({'category': 'word', 'rule': 'word', 'file': rp, 'line': f.line, 'occ': 0,
+                             'current': f.text, 'proposed': f.suggestion or f.text,
+                             'context': raw[f.line - 1].strip() if f.line <= len(raw) else f.context,
+                             'note': ' · '.join(f.reasons), 'score': f.score})
+        if session.meter:
+            rows += _verse_rows(p, rp, [f for f in fs if f.kind == 'meter'], session.meter)
+    session.close()
+    rows.sort(key=lambda r: (r['file'], r['line'], r['category'] != 'meter'))
+    for i, r in enumerate(rows, 1):
+        r.update(id=i, round=args.id, section='Metre' if r['category'] == 'meter' else 'Words')
+    data = {'title': args.title or f'Review {args.id}', 'rounds': [
+        {'round': args.id, 'label': args.id, 'title': ', '.join(s for s, _ in fetched) or
+         ', '.join(sorted({r['file'] for r in rows})), 'rows': rows}]}
+    if fetched:
+        data['root'] = os.path.relpath(root_dir(), tool_dir())
+        data['sources'] = [{'source': s, 'commit': c} for s, c in fetched]
+    with open(args.out, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+    c = Counter(r['category'] for r in rows)
+    print(f'{len(files)} file(s): {c["word"]} word rows, {c["meter"]} metre rows -> {args.out}\n'
+          f'next: proof.py review {args.out}   (or proof.py site {args.out} --out DIR)', file=sys.stderr)
 
 
 def cmd_eval(args):
@@ -446,6 +584,8 @@ def cmd_eval(args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--root', help='where the texts live (default: the StotraSamhita folder; '
+                    'for fetched sources, work/)')
     sub = ap.add_subparsers(dest='cmd', required=True)
 
     def common(p):
@@ -511,6 +651,22 @@ def main():
     p.add_argument('--port', type=int, default=8765)
     p.add_argument('--no-meter', action='store_true')
     p.set_defaults(fn=cmd_serve)
+    p = sub.add_parser('gold-index', help='refresh gold-index.json.gz from the gold repos\' committed HEAD')
+    p.add_argument('--label', default='', help='what this snapshot is, e.g. gold-2026-11-08')
+    p.set_defaults(fn=cmd_gold_index)
+    p = sub.add_parser('setup', help='fetch verse-checker and build the index from gold-index.json.gz')
+    p.set_defaults(fn=cmd_setup)
+    p = sub.add_parser('fetch', help='fetch GitHub sources into work/ and print their paths')
+    p.add_argument('files', nargs='+', metavar='SOURCE', help='gh:OWNER/REPO[@REF][:PATH] or a GitHub URL')
+    p.set_defaults(fn=cmd_fetch)
+    p = sub.add_parser('round', help='check files and write the flags as a review round')
+    p.add_argument('files', nargs='+', metavar='FILE|DIR|SOURCE')
+    p.add_argument('--id', required=True, help='round id, e.g. R1 (never reuse a published one)')
+    p.add_argument('--out', required=True, help='round file to write')
+    p.add_argument('--title', help='page heading')
+    p.add_argument('--threshold', type=float, default=REPORT_THRESHOLD)
+    p.add_argument('--no-meter', action='store_true')
+    p.set_defaults(fn=cmd_round)
     p = sub.add_parser('review', help='review a round file in the browser; decisions to decisions/ROUND.json')
     p.add_argument('rounds', metavar='ROUND.json', help="a builder's round file, or a page's edits.json")
     p.add_argument('--round', help='which round, if the file holds several (default: all)')
@@ -548,6 +704,8 @@ def main():
     p.set_defaults(fn=cmd_approve)
 
     args = ap.parse_args()
+    if args.root:
+        os.environ['PROOF_ROOT'] = os.path.abspath(args.root)
     args.fn(args)
 
 

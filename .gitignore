@@ -3,3 +3,5 @@ __pycache__/
 /review
 decisions/*.apply.csv
 decisions/*.tmp
+/work
+/vendor

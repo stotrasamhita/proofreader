@@ -39,3 +39,10 @@ puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/64-kamala.tex
 puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/65-parama.tex
 puja-vidhanam/kathas/ekadashi/padma-puranam/chapters/70-shravana-dvadashi.tex
 gita/mahatmyam-padma-puranam.tex
+
+# Gaṅgā-kalpa book stotras (2026-11-07): held out of gold until round E1 closes
+-stotra-sangrahah/stotras/nadi/GangaStotram.tex
+-stotra-sangrahah/stotras/shiva/ChandrashekharashtakamMarkandeya.tex
+-stotra-sangrahah/stotras/shiva/DvadashaJyotirlingaStotram.tex
+-stotra-sangrahah/stotras/shiva/KashiPanchakam.tex
+-stotra-sangrahah/stotras/shiva/VishvanathashtakamVyasa.tex

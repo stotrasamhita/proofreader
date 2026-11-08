@@ -13,19 +13,31 @@ import os
 import pickle
 import sys
 
-from .index import root_dir, tool_dir
+from .index import tool_dir
 
-VERSE_CHECKER = os.path.join(root_dir(), 'verse-checker')
+VERSE_CHECKER_URL = 'https://github.com/stotrasamhita/verse-checker'
 _CACHE_PATH = os.path.join(tool_dir(), 'index', 'meter-cache.pkl.gz')
+
+
+def verse_checker():
+    """$VERSE_CHECKER, a clone beside the proofreader (the StotraSamhita layout),
+    or vendor/verse-checker (`proof.py setup`)."""
+    for d in (os.environ.get('VERSE_CHECKER'),
+              os.path.join(os.path.dirname(tool_dir()), 'verse-checker'),
+              os.path.join(tool_dir(), 'vendor', 'verse-checker')):
+        if d and os.path.isfile(os.path.join(d, 'scan.py')):
+            return d
+    return None
 
 
 class MeterChecker:
     def __init__(self):
-        if not os.path.isdir(VERSE_CHECKER):
-            raise SystemExit(f'verse-checker not found at {VERSE_CHECKER}')
-        sys.path.insert(0, VERSE_CHECKER)
+        vc = verse_checker()
+        if not vc:
+            raise SystemExit('verse-checker not found: run `proof.py setup`, or use --no-meter')
+        sys.path.insert(0, vc)
         cwd = os.getcwd()
-        os.chdir(VERSE_CHECKER)          # it loads data/*.json relative to cwd
+        os.chdir(vc)                     # it loads data/*.json relative to cwd
         logging.disable(logging.CRITICAL)
         try:
             with contextlib.redirect_stdout(io.StringIO()):
