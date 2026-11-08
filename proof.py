@@ -20,6 +20,7 @@
   proof.py review ROUND.json         review a built round in the browser -> decisions/ROUND.json
   proof.py import ROUND.json FILE    merge decisions exported from a review page
   proof.py apply ROUND [--dry-run]   apply it: mis-click check, edits, rejects to accepted.txt
+  proof.py submit ROUND              send it to the editor as a pull request
   proof.py site ROUND.json --out D   static review page (decisions kept in the browser)
 """
 
@@ -311,10 +312,14 @@ def _keeps(row, idx, accepted, note):
     from proofreader.checks import verse_id
     from proofreader.text import WORD_RE
     if row['category'] == 'meter':
-        units = [u for u in parse_file(os.path.join(root_dir(), row['file'])) if u.kind == 'verse'
-                 and any(l.lineno == row['line'] for l in u.lines)]
-        if units:
-            first = units[0].lines[0].text.strip()
+        path = os.path.join(root_dir(), row['file'])
+        if os.path.exists(path):
+            units = [u for u in parse_file(path) if u.kind == 'verse'
+                     and any(l.lineno == row['line'] for l in u.lines)]
+            first = units[0].lines[0].text.strip() if units else None
+        else:               # a reviewer's own text, not here: a whole-verse row starts with its first line
+            first = row['current'].split('\n')[0].strip() if 'lines' in row else None
+        if first:
             return [] if verse_id([first]) in accepted else [f'meter: {first}  # {note}']
     elif row['category'] != 'word':
         return []           # style rows: a reject is a split label, not a kept word
@@ -357,6 +362,13 @@ def cmd_apply(args):
     if n['edited']:
         print('(edited proposals above: check them by eye, and that verse lines still scan)')
 
+    absent = sorted({R[i]['file'] for i, d in D.items() if d['status'] == 'accept'
+                     and not os.path.exists(os.path.join(root_dir(), R[i]['file']))})
+    if absent and not args.keeps_only:
+        sys.exit(f'{len(absent)} file(s) with accepted edits are not here (e.g. {absent[0]}): '
+                 'a reviewer\'s own texts? Re-run with --keeps-only to take just the keeps and '
+                 'split labels, or fetch the texts and pass --root.')
+
     idx, accepted = Index.load(), load_accepted()
     keeps = []
     for i, d in sorted(D.items()):
@@ -372,6 +384,20 @@ def cmd_apply(args):
             print(f'would keep  {k}')
         print(f'{len(rows)} edit(s), {len(miss)} not found, {len(labels)} label(s), '
               f'{len(keeps)} keep(s); nothing written')
+        return
+
+    if args.keeps_only:
+        from proofreader import splitmodel
+        labels = apply_round.split_labels(R, list(D.values()))
+        splitmodel.add_labels(labels)
+        if keeps:
+            with open(ACCEPTED, 'a', encoding='utf-8') as f:
+                f.write(''.join(k + '\n' for k in keeps))
+        for k in keeps:
+            print('  kept', k)
+        print(f'keeps only: accepted.txt +{len(keeps)}, labels +{len(labels)}; '
+              f'{sum(d["status"] == "accept" for d in D.values())} accepted edit(s) left to the texts\' owner')
+        df.mark_applied(set(D))
         return
 
     csv_path = df.path[:-len('.json')] + '.apply.csv'
@@ -396,6 +422,18 @@ def cmd_apply(args):
     if held:
         print(f'{len(held)} row(s) not applied: {",".join(map(str, sorted(held)))}. Edit them by hand '
               f'and mark them done with --skip, or re-run to retry them.')
+
+
+def cmd_submit(args):
+    """Send a reviewed round to the editor as a pull request (via the GitHub API and gh)."""
+    from proofreader.rounds import DecisionFile
+    from proofreader import submit
+    df = DecisionFile(args.round, directory=args.decisions)
+    if not os.path.exists(df.path) or not df.docs():
+        sys.exit(f'nothing to submit: no decisions in {df.path}')
+    if not df.rows_path or not os.path.exists(df.rows_path):
+        sys.exit(f'{df.path}: its round file {df.rows_path!r} is missing')
+    submit.submit(df, args.repo, args.as_id or args.round, dry_run=args.dry_run)
 
 
 def cmd_gold_index(args):
@@ -651,6 +689,13 @@ def main():
     p.add_argument('--port', type=int, default=8765)
     p.add_argument('--no-meter', action='store_true')
     p.set_defaults(fn=cmd_serve)
+    p = sub.add_parser('submit', help='send a reviewed round to the editor as a pull request')
+    p.add_argument('round', metavar='ROUND')
+    p.add_argument('--as', dest='as_id', metavar='ID', help='submit under another round id (if ROUND is taken)')
+    p.add_argument('--repo', default='stotrasamhita/proofreader')
+    p.add_argument('--decisions', help='decisions directory (default: decisions/)')
+    p.add_argument('--dry-run', action='store_true', help='show what would be sent; send nothing')
+    p.set_defaults(fn=cmd_submit)
     p = sub.add_parser('gold-index', help='refresh gold-index.json.gz from the gold repos\' committed HEAD')
     p.add_argument('--label', default='', help='what this snapshot is, e.g. gold-2026-11-08')
     p.set_defaults(fn=cmd_gold_index)
@@ -696,6 +741,8 @@ def main():
     p.add_argument('--rows', help='the round file, if it moved since the review')
     p.add_argument('--dry-run', action='store_true', help='show what would change; write nothing')
     p.add_argument('--force', action='store_true', help='apply despite stale or mixed decisions (signed off)')
+    p.add_argument('--keeps-only', action='store_true',
+                   help="don't edit texts (a reviewer's own): only rejects to accepted.txt and split labels")
     p.add_argument('--skip', metavar='IDS', help='comma-separated row ids to mark done without applying '
                    '(fixed by hand)')
     p.set_defaults(fn=cmd_apply)

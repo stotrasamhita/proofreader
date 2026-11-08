@@ -53,6 +53,21 @@ commits, and records each repo's commit. `proof.py build` touches only your
 local `index/`. A local index built from the texts is never replaced by the
 snapshot; on a checkout without the texts, the local index follows the snapshot.
 
+### Sending a review back
+
+```sh
+./proof.py submit R1 --dry-run     # what would be sent
+./proof.py submit R1               # opens a pull request to stotrasamhita/proofreader
+```
+
+`submit` needs the GitHub CLI (`gh auth login`). It adds `decisions/R1.json` and
+`decisions/R1.rows.json` in one commit on a `review/R1` branch, on a fork if you
+can't push to the repo, and opens the pull request. The commit is credited to
+your GitHub no-reply address. If the round id is taken, use `--as R1-yourname`.
+The editor merges it and runs `proof.py apply R1`, or `--keeps-only` when the
+texts were your own: then only the readings you marked correct and the split
+labels are taken, and your texts stay yours to edit (`proof.py apply R1` on your side).
+
 ## Review in the browser
 
 ```sh

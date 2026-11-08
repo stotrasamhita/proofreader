@@ -13,16 +13,25 @@ from proofreader import edits, splitmodel as sm
 ROOT = corpus.ROOT
 
 
-def plan(R, D):
-    """Resolve decisions against the files. Returns (rows to apply, rows not
-    found or needing a hand edit, split labels)."""
-    rows, miss, labels, todo = [], [], [], []
+def split_labels(R, D):
+    """Split-model labels from split/join decisions (accepted or rejected)."""
+    labels = []
     for d in D:
         r = dict(R[d['id']]); r['proposed'] = d['proposed']
         if r['rule'] in ('split', 'join') and len((r['proposed'] if r['rule'] == 'split' else r['current']).split(' ')) == 2:
             cur, prop = (r['current'], r['proposed']) if r['rule'] == 'split' else (r['proposed'], r['current'])
             st = d['status'] if r['rule'] == 'split' else ('reject' if d['status'] == 'accept' else 'accept')
             labels.append({'rule': 'split', 'current': cur, 'proposed': prop, 'status': st, 'file': r['file'], 'line': r['line']})
+    return labels
+
+
+def plan(R, D):
+    """Resolve decisions against the files. Returns (rows to apply, rows not
+    found or needing a hand edit, split labels)."""
+    rows, miss, todo = [], [], []
+    labels = split_labels(R, D)
+    for d in D:
+        r = dict(R[d['id']]); r['proposed'] = d['proposed']
         if d['status'] != 'accept': continue
         if 'lines' in r:
             cur, prop = r['current'].split('\n'), r['proposed'].split('\n')
