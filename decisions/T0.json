@@ -1,0 +1,43 @@
+{
+ "applied": [],
+ "decisions": {
+  "3": {
+   "category": "meter",
+   "current": "पतितोद्धारिणि जाह्नवि गङ्गे खण्डितगिरिवरमण्डितभङ्गे\nभीष्मजननि हे मुनिवरकन्ये पतितनिवारिणि त्रिभुवनधन्ये",
+   "file": "stotra-sangrahah/stotras/nadi/GangaStotram.tex",
+   "id": 3,
+   "line": 30,
+   "occ": 0,
+   "proposed": "पतितोद्धारिणि जाह्नवि गङ्गे खण्डितगिरिवरमण्डितभङ्गे\nभीष्मजननि मुनिवरकन्ये पतितनिवारिणि त्रिभुवनधन्ये",
+   "round": "T0",
+   "rule": "meter",
+   "status": "accept"
+  },
+  "6": {
+   "category": "word",
+   "current": "तटनिकटे",
+   "file": "stotra-sangrahah/stotras/nadi/GangaStotram.tex",
+   "id": 6,
+   "line": 51,
+   "occ": 0,
+   "proposed": "तटिनिकटे",
+   "round": "T0",
+   "rule": "word",
+   "status": "accept"
+  },
+  "7": {
+   "category": "word",
+   "current": "कमठो",
+   "file": "stotra-sangrahah/stotras/nadi/GangaStotram.tex",
+   "id": 7,
+   "line": 54,
+   "occ": 0,
+   "proposed": "कमठो",
+   "round": "T0",
+   "rule": "word",
+   "status": "reject"
+  }
+ },
+ "round": "T0",
+ "rows": "decisions/T0.rows.json"
+}
