@@ -44,6 +44,52 @@ The min-score slider and "flagged only" filter the view. `#path:line` in the
 URL opens a file at a line. Edits go straight to the working tree of each
 repo; review with the Diff button or `git diff`, then commit as usual.
 
+## Review a built round
+
+A round is a list of proposed edits written by a builder (`[{id, round, category,
+rule, file, line, occ, current, proposed, context, note}, …]`), or a review
+page's `edits.json` (`{title, rounds: [{round, label, title, rows}]}`).
+
+```sh
+./proof.py review review/phaseE/rounds/round-E1.json      # then open http://127.0.0.1:8766/
+./proof.py apply E1 --dry-run                              # what would change
+./proof.py apply E1                                        # do it
+```
+
+`review` serves the shared review page (`proofreader/round.html`) and saves each
+decision to `decisions/<round>.json` as you click. `apply` then
+
+1. runs the mis-click check (`corpus-checks/misclick.py`) and stops on stale or
+   mixed decisions (fix them on the page, or sign them off with `--force`);
+2. applies the accepts (`corpus-checks/apply_round.py`, whole verses pāda by pāda)
+   and appends split labels;
+3. writes each reject to `accepted.txt` as `word  # E1-12 reviewed: kept as printed`
+   (a rejected verse as `meter: <its first line>`).
+
+Applied decisions are recorded in the decisions file and skipped next time, so a
+long round can be decided and applied in parts. A row that cannot be applied is
+reported for a hand edit; mark it done with `--skip 12,15`. `review --import DIR`
+first loads decisions exported from a Claude review page (one JSON per doc). The
+same `round.html`, published with an `edits.json` as a Claude artifact, saves to
+the artifact's database instead. No reviewer identity is stored anywhere.
+
+### Without a server
+
+```sh
+./proof.py site review/phaseE/rounds/round-E1.json --out /tmp/e1            # index.html + edits.json
+./proof.py site round-E1.json round-C3.json --out /tmp/rv --inline          # one file, opens from disk
+./proof.py import review/phaseE/rounds/round-E1.json ~/Downloads/decisions-E1.json
+./proof.py apply E1
+```
+
+`site` writes a static copy of the page for any web host (or, with `--inline`, a
+single HTML file to send to a reviewer). Opened there, the page keeps decisions in
+that browser; **Export decisions** saves them as `decisions-<round>.json`, which
+`proof.py import` merges into `decisions/<round>.json` (an imported decision wins,
+except over one already applied). The page's **Import decisions…** loads such a
+file back, e.g. to carry on in another browser. `import` also reads a directory of
+docs exported from a Claude page.
+
 ## House style
 
 ```sh

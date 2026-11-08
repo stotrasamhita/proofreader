@@ -1,0 +1,557 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- The shared review page. Rows come from edits.json beside it ({title?, rounds:[{round,label,title,rows}]});
+     decisions go to whichever store is available: the Claude artifact DB, or `proof.py review` (decisions/<round>.json). -->
+<title>StotraSamhita review</title>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+Devanagari:wght@400;600&display=swap">
+<style>
+/* Layout: one review column; sticky toolbar of filters over a list of edit rows, each a before/after pair of verse lines */
+:root {
+  --paper: #f3f4f8; --surface: #ffffff; --ink: #1b1f33; --muted: #5c627a; --line: #dcdfe9;
+  --accent: #33408f; --accent-ink: #ffffff;
+  --ok: #1d7a4b; --ok-bg: #e2f3ea; --no: #b3322e; --no-bg: #f9e4e2;
+  --del: #f6d9d6; --del-ink: #8a1f1a; --ins: #d7efe1; --ins-ink: #145c36;
+  --deva: "Noto Serif Devanagari", "Sanskrit 2003", "Siddhanta", serif;
+  --ui: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #12141c; --surface: #1a1d29; --ink: #e7e9f2; --muted: #9ba1b9; --line: #2c3042;
+    --accent: #a3adff; --accent-ink: #12141c;
+    --ok: #67cf96; --ok-bg: #173226; --no: #ff8279; --no-bg: #3a1b1a;
+    --del: #4a2422; --del-ink: #ffc9c3; --ins: #1b3f2c; --ins-ink: #bff0d3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #12141c; --surface: #1a1d29; --ink: #e7e9f2; --muted: #9ba1b9; --line: #2c3042;
+  --accent: #a3adff; --accent-ink: #12141c;
+  --ok: #67cf96; --ok-bg: #173226; --no: #ff8279; --no-bg: #3a1b1a;
+  --del: #4a2422; --del-ink: #ffc9c3; --ins: #1b3f2c; --ins-ink: #bff0d3;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--ui); }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 80px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 0; font-variant-numeric: tabular-nums; }
+.tally span b { font-weight: 600; }
+.t-ok { color: var(--ok); } .t-no { color: var(--no); } .t-pend { color: var(--muted); }
+.bar-meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: flex; margin-top: 8px; }
+.bar-meter i { display: block; height: 100%; }
+.bar-meter .m-ok { background: var(--ok); } .bar-meter .m-no { background: var(--no); }
+
+.tools { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
+  padding-block: 12px; border-bottom: 1px solid var(--line); margin-top: 16px;
+  display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px;
+  padding: 4px 11px; font: 500 13px var(--ui); cursor: pointer; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip small { opacity: .7; margin-left: 4px; font-weight: 400; }
+.row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#q { flex: 1 1 220px; min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--ink); font: 14px var(--ui); }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px;
+  padding: 6px 12px; font: 500 14px var(--ui); cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.ok { color: var(--ok); } .btn.no { color: var(--no); }
+.btn.arm { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.io { margin-top: 12px; }
+.shown { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; margin-left: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.notice { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: var(--no-bg); color: var(--no); font-size: 14px; }
+#list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.edit { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line);
+  border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; }
+.edit.accept { border-left-color: var(--ok); }
+.edit.reject { border-left-color: var(--no); }
+.edit.cur { box-shadow: 0 0 0 2px var(--accent); }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 13px; color: var(--muted); min-width: 0; }
+.path { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+.path b { color: var(--ink); font-weight: 500; }
+.pill { font-size: 11.5px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; padding: 1px 7px;
+  border-radius: 4px; border: 1px solid currentColor; }
+.pill.error { color: var(--no); } .pill.mech { color: var(--ok); } .pill.review { color: var(--accent); }
+.lines { grid-column: 1 / 2; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ln { display: grid; grid-template-columns: 18px 1fr; font: 18px/1.9 var(--deva); min-width: 0; }
+.ln > span:first-child { font: 600 13px/2.6 var(--mono); color: var(--muted); user-select: none; }
+.ln > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+del, ins { text-decoration: none; border-radius: 3px; padding: 0 2px; }
+del { background: var(--del); color: var(--del-ink); }
+ins { background: var(--ins); color: var(--ins-ink); }
+.note { grid-column: 1 / 2; color: var(--muted); font-size: 13px; }
+.acts { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: 6px; align-self: start; }
+.acts .btn { min-width: 92px; }
+.acts .btn[aria-pressed="true"].ok { background: var(--ok); color: var(--surface); border-color: var(--ok); }
+.acts .btn[aria-pressed="true"].no { background: var(--no); color: var(--surface); border-color: var(--no); }
+.empty { color: var(--muted); text-align: center; padding: 40px 0; }
+.verse { font: 17px/1.8 var(--deva); color: var(--muted); }
+.verse b { color: var(--ink); font-weight: 600; }
+.verse.scan { color: var(--ink); }
+.vnum { font: 600 13px var(--mono); color: var(--ink); }
+.verse mark { background: var(--del); color: var(--del-ink); border-radius: 3px; padding: 0 1px; margin: 0 1px;
+  box-shadow: 0 0 0 1px var(--del-ink) inset; }
+.verse mark.soft { background: transparent; color: var(--ink); box-shadow: none; outline: 1.5px dashed var(--accent); outline-offset: -1px; }
+.fix { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.fix input, .fix textarea { flex: 1; min-width: 0; font: 18px/1.6 var(--deva); padding: 4px 8px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--paper); color: var(--ink); }
+.fix textarea { resize: vertical; white-space: pre; overflow-x: auto; }
+.fix.whole { align-items: flex-start; }
+.fix input:focus, .fix textarea:focus { border-color: var(--accent); outline: none; }
+.pattern { font: 12px/1.6 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pill.meter { color: var(--no); } .pill.word { color: var(--no); } .pill.recheck { color: var(--accent); }
+.keys { color: var(--muted); font-size: 12.5px; }
+kbd { font: 11.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+#toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 8px; font-size: 14px;
+  opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
+#toast.show { opacity: 1; }
+@media (max-width: 620px) {
+  .edit { grid-template-columns: 1fr; }
+  .acts { grid-column: 1; grid-row: auto; flex-direction: row; }
+  .acts .btn { flex: 1; min-width: 0; }
+  .shown { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 id="title">StotraSamhita review</h1>
+    <p class="sub" id="focus"></p>
+    <p class="sub" id="sub"></p>
+    <p class="sub">Accept or reject each one. For metre rows, edit any pāda of the verse (one per line) and choose Fix; for word rows, edit the word, or mark it correct so it is never flagged again.</p>
+    <p class="sub" id="where"></p>
+    <div class="row2 io">
+      <button class="btn" id="exportBtn">Export decisions</button>
+      <button class="btn" id="importBtn" disabled>Import decisions…</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <div class="tally" id="tally"></div>
+    <div class="bar-meter" id="meter" aria-hidden="true"></div>
+    <div class="notice" id="notice" hidden></div>
+  </header>
+
+  <div class="tools">
+    <div class="chips" id="rounds" role="group" aria-label="Review round" hidden></div>
+    <div class="chips" id="cats" role="group" aria-label="Kind of edit"></div>
+    <div class="chips" id="stats" role="group" aria-label="Decision"></div>
+    <div class="row2">
+      <input id="q" type="search" placeholder="Filter by file or text" autocomplete="off">
+      <button class="btn ok" id="bulkOk">Accept all shown</button>
+      <button class="btn no" id="bulkNo">Reject all shown</button>
+      <span class="shown" id="shown"></span>
+    </div>
+    <div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>a</kbd> accept · <kbd>r</kbd> reject · <kbd>u</kbd> undecide · <kbd>Enter</kbd> saves a fix (<kbd>Ctrl</kbd>+<kbd>Enter</kbd> in a verse box) · <span class="verse"><mark>marked</mark></span> syllables are where the metre breaks; <span class="verse"><mark class="soft">dashed</mark></span> ones are light but heavy only before a conjunct (often ārṣa)</div>
+  </div>
+
+  <div id="list"><div class="empty">Loading the proposed edits…</div></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="edits-data"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+const ERRORISH = r => r.category === 'meter' || r.category === 'word';
+const BASE_CATS = [
+  ['all', 'All', r => true],
+  ['recheck', 'Recheck', r => r.category === 'recheck'],
+  ['meter', 'Metre', r => r.category === 'meter'],
+  ['word', 'Words', r => r.category === 'word'],
+  ['error', 'Errors', r => r.category === 'error' || r.category === 'possible-error'],
+  ['mech', 'Mechanical', r => r.category === 'style-mechanical'],
+  ['split', 'Split', r => r.rule.includes('split')],
+  ['likely', 'Likely splits', r => r.rule.includes('split') && /model (?:[5-9]\d|100)%/.test(r.note)],
+  ['avagraha', 'Avagraha', r => r.rule === 'avagraha'],
+];
+let CATS = BASE_CATS;
+const STATS = [['pending', 'Pending'], ['accept', 'Accepted'], ['reject', 'Rejected'], ['any', 'All']];
+
+let round = '', rows = [], decisions = {}, fixes = {}, docs = {}, sink = null, canWrite = false;
+
+// Where decisions are kept. Each store: watch(round, onDocs, onError) -> unsubscribe,
+// set(doc), remove(round, id), readOnly(error) -> true if this viewer may not write.
+const STORES = [
+  async function claudeStore() {                 // the Claude artifact DB, doc id <round>-<id>
+    if (!window.claude) return null;
+    const db = await window.claude.use('db');
+    if (!db) return null;
+    const col = db.collection('decisions');
+    return { name: 'claude',
+      watch: (rd, cb, err) => col.where('round', '==', rd).onSnapshot(s => cb(s.docs.map(d => d.data())), err),
+      set: doc => col.doc(`${doc.round}-${doc.id}`).set(doc),
+      remove: (rd, id) => col.doc(`${rd}-${id}`).delete(),
+      readOnly: e => !!e && e.code === 'invalid_argument' };
+  },
+  async function localStore() {                  // `proof.py review`: decisions/<round>.json
+    const get = async rd => {
+      const res = await fetch('api/decisions?round=' + encodeURIComponent(rd), { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      return res.json();
+    };
+    let first;
+    try { first = await get(round); } catch { return null; }
+    if (first.store !== 'local') return null;
+    async function post(body) {
+      const res = await fetch('api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(body) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
+    }
+    return { name: 'local', path: first.path,
+      watch(rd, cb, err) {                       // one reader; re-read when the tab comes back
+        const load = () => get(rd).then(d => cb(d.docs), err);
+        const onVis = () => { if (!document.hidden) load(); };
+        load();
+        document.addEventListener('visibilitychange', onVis);
+        return () => document.removeEventListener('visibilitychange', onVis);
+      },
+      set: doc => post({ round: doc.round, id: doc.id, doc }),
+      remove: (rd, id) => post({ round: rd, id, doc: null }),
+      readOnly: () => false };
+  },
+  async function browserStore() {                // anywhere else (the website): this browser only
+    const key = rd => `ss-decisions:${location.pathname}:${rd}`;
+    let persistent = true;
+    try { localStorage.setItem('ss-probe', '1'); localStorage.removeItem('ss-probe'); } catch { persistent = false; }
+    const mem = {};
+    const read = rd => {
+      if (!persistent) return mem[rd] || {};
+      try { return JSON.parse(localStorage.getItem(key(rd)) || '{}'); } catch { return {}; }
+    };
+    const write = (rd, m) => { if (persistent) localStorage.setItem(key(rd), JSON.stringify(m)); else mem[rd] = m; };
+    return { name: 'browser', persistent,
+      watch(rd, cb) {                            // other tabs of the same page show up via 'storage'
+        cb(Object.values(read(rd)));
+        const on = e => { if (e.key === key(rd)) cb(Object.values(read(rd))); };
+        addEventListener('storage', on);
+        return () => removeEventListener('storage', on);
+      },
+      set: async doc => { const m = read(doc.round); m[doc.id] = doc; write(doc.round, m); },
+      remove: async (rd, id) => { const m = read(rd); delete m[id]; write(rd, m); },
+      readOnly: () => false };
+  },
+];
+let cat = store.get('cat', 'all'), stat = store.get('stat', 'pending'), cur = null, armed = null;
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2400); }
+const status = r => decisions[r.id] || 'pending';
+
+function cleanCtx(s) {
+  return s.replace(/(^|[^\\])%.*$/, '$1').replace(/\\[a-zA-Z]+\*?/g, ' ').replace(/[{}]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function occIndex(text, sub, occ) {
+  let i = -1;
+  for (let n = 0; n <= occ; n++) { i = text.indexOf(sub, i + 1); if (i < 0) return -1; }
+  return i;
+}
+function beforeAfter(r) {
+  const ctx = cleanCtx(r.context);
+  const i = occIndex(ctx, r.current, r.occ) >= 0 ? occIndex(ctx, r.current, r.occ) : ctx.indexOf(r.current);
+  if (i < 0) return [`<del>${esc(r.current)}</del>`, `<ins>${esc(r.proposed)}</ins>`];
+  const a = esc(ctx.slice(0, i)), z = esc(ctx.slice(i + r.current.length));
+  return [`${a}<del>${esc(r.current)}</del>${z}`, `${a}<ins>${esc(r.proposed)}</ins>${z}`];
+}
+function kindPill(r) {
+  if (r.rule === 'gita') return '<span class="pill error">Gītā · words file</span>';
+  if (r.category === 'error') return '<span class="pill error">error</span>';
+  if (r.category === 'possible-error') return '<span class="pill error">possible error</span>';
+  if (r.category === 'meter') return '<span class="pill meter">metre</span>';
+  if (r.category === 'word') return '<span class="pill word">word</span>';
+  if (r.category === 'recheck') return `<span class="pill recheck">recheck · ${esc(r.rule)}</span>`;
+  return `<span class="pill ${r.category === 'style-mechanical' ? 'mech' : 'review'}">${esc(r.rule)}</span>`;
+}
+
+function filtered() {
+  const f = CATS.find(c => c[0] === cat)[2], q = $('#q').value.trim().toLowerCase();
+  return rows.filter(r => f(r) && (stat === 'any' || status(r) === stat) &&
+    (!q || r.file.toLowerCase().includes(q) || r.current.includes(q) || r.proposed.includes(q) || r.context.includes(q)));
+}
+
+function renderTally() {
+  const c = { accept: 0, reject: 0, pending: 0 };
+  rows.forEach(r => c[status(r)]++);
+  const n = rows.length || 1;
+  $('#tally').innerHTML = `<span class="t-ok"><b>${c.accept}</b> accepted</span>
+    <span class="t-no"><b>${c.reject}</b> rejected</span><span class="t-pend"><b>${c.pending}</b> pending</span>
+    <span class="t-pend">of ${rows.length}</span>`;
+  $('#meter').innerHTML = `<i class="m-ok" style="width:${100 * c.accept / n}%"></i><i class="m-no" style="width:${100 * c.reject / n}%"></i>`;
+  $('#cats').innerHTML = CATS.map(([k, label, f]) => {
+    const total = rows.filter(f).length, pend = rows.filter(r => f(r) && status(r) === 'pending').length;
+    return `<button class="chip" data-cat="${k}" aria-pressed="${k === cat}">${label}<small>${pend}/${total}</small></button>`;
+  }).join('');
+  $('#stats').innerHTML = STATS.map(([k, label]) =>
+    `<button class="chip" data-stat="${k}" aria-pressed="${k === stat}">${label}</button>`).join('');
+}
+
+function renderList() {
+  const vis = filtered();
+  $('#shown').textContent = `${vis.length} shown`;
+  $('#bulkOk').disabled = $('#bulkNo').disabled = !vis.length || !canWrite;
+  if (!rows.length) return;
+  if (!vis.length) { $('#list').innerHTML = '<div class="empty">Nothing here. Try another filter.</div>'; return; }
+  $('#list').innerHTML = vis.map(r => {
+    const [b, a] = beforeAfter(r), s = status(r);
+    const parts = r.file.split('/'), name = parts.pop();
+    if (ERRORISH(r)) return errorRow(r, s, parts, name);
+    return `<article class="edit ${s}${r.id === cur ? ' cur' : ''}" data-id="${r.id}" tabindex="-1">
+      <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${kindPill(r)}<span>#${r.id}</span></div>
+      <div class="lines"><div class="ln"><span>−</span><span>${b}</span></div><div class="ln"><span>+</span><span>${a}</span></div></div>
+      <div class="note">${esc(r.note)}</div>
+      <div class="acts">
+        <button class="btn ok" data-act="accept" aria-pressed="${s === 'accept'}" ${canWrite ? '' : 'disabled'}>Accept</button>
+        <button class="btn no" data-act="reject" aria-pressed="${s === 'reject'}" ${canWrite ? '' : 'disabled'}>Reject</button>
+      </div></article>`;
+  }).join('');
+}
+function errorRow(r, s, parts, name) {
+  const fixed = fixes[r.id] != null ? fixes[r.id] : r.proposed;
+  const whole = r.current.includes('\n');      // metre row holding the whole verse, one pāda per line
+  const verse = whole ? (r.shown ? `<div class="verse scan" aria-label="The verse as printed, with the syllables the metre check points at marked">${
+      r.shown.split('\n').map(l => esc(l).replace(/\x01/g, '<mark>').replace(/\x02/g, '</mark>').replace(/\x03/g, '<mark class="soft" title="Light, but heavy here only because a conjunct follows">').replace(/\x04/g, '</mark>')).join('<br>')}</div>` : '')
+    : r.category === 'meter'
+    ? `<div class="verse">${r.context.split(' / ').map(l => l.trim() === r.current ? `<b>${esc(l)}</b>` : esc(l)).join('<br>')}</div>`
+    : `<div class="verse">${beforeAfter(r)[0]}</div>`;
+  const notes = r.note.split(' · ');
+  const pat = notes.filter(n => n.startsWith('pattern:')).join('\n');
+  const text = notes.filter(n => !n.startsWith('pattern:')).join(' · ');
+  return `<article class="edit ${s}${r.id === cur ? ' cur' : ''}" data-id="${r.id}" tabindex="-1">
+    <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${r.vnum ? `<span class="vnum">${/^[0-9]/.test(r.vnum) ? "verse " : ""}${esc(r.vnum)}</span>` : ''}${kindPill(r)}<span>#${r.id}</span></div>
+    <div class="lines">${verse}
+      ${whole
+        ? `<label class="fix whole"><span class="keys">Verse</span>
+        <textarea id="fix-${r.id}" data-fix="${r.id}" rows="${fixed.split('\n').length}" spellcheck="false" ${canWrite ? '' : 'disabled'} aria-label="Corrected verse, one pāda per line">${esc(fixed)}</textarea></label></div>`
+        : `<label class="fix"><span class="keys">${r.category === 'meter' ? 'Pāda' : 'Fix'}</span>
+        <input id="fix-${r.id}" data-fix="${r.id}" value="${esc(fixed)}" ${canWrite ? '' : 'disabled'} aria-label="Corrected text"></label></div>`}
+    <div class="note">${esc(text)}${pat ? `<div class="pattern">${esc(pat)}</div>` : ''}</div>
+    <div class="acts">
+      <button class="btn ok" data-act="accept" aria-pressed="${s === 'accept'}" ${canWrite ? '' : 'disabled'}>Fix</button>
+      <button class="btn no" data-act="reject" aria-pressed="${s === 'reject'}" ${canWrite ? '' : 'disabled'}>It's correct</button>
+    </div></article>`;
+}
+function render() { renderTally(); renderList(); }
+
+async function decide(r, s) {
+  if (!sink || !canWrite) return;
+  const prev = decisions[r.id];
+  const next = prev === s ? null : s;           // clicking the active choice clears it
+  let proposed = r.proposed;
+  if (ERRORISH(r)) {
+    const inp = document.getElementById('fix-' + r.id);
+    proposed = (inp ? inp.value : (fixes[r.id] != null ? fixes[r.id] : r.proposed)).split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+    if (next === 'accept' && proposed === r.current) {
+      toast('Edit the text first, or choose "It\'s correct".');
+      if (inp) inp.focus();
+      return;
+    }
+    fixes[r.id] = proposed;
+  }
+  if (next) decisions[r.id] = next; else delete decisions[r.id];
+  render();
+  try {
+    const doc = { round, id: r.id, status: next, category: r.category, rule: r.rule,
+                  file: r.file, line: r.line, occ: r.occ, current: r.current,
+                  proposed, decidedAt: new Date().toISOString() };
+    if (next) { await sink.set(doc); docs[r.id] = doc; }
+    else { await sink.remove(round, r.id); delete docs[r.id]; }
+  } catch (e) {
+    if (prev) decisions[r.id] = prev; else delete decisions[r.id];
+    render();
+    const ro = sink.readOnly(e);
+    toast(ro ? 'You can view these edits but not decide on them.' : 'Could not save that decision. Try again.');
+    if (ro) { canWrite = false; render(); }
+  }
+}
+
+async function bulk(s) {
+  const vis = filtered().filter(r => status(r) !== s && !(s === 'accept' && ERRORISH(r)));
+  if (!vis.length) { if (s === 'accept') toast('Metre and word rows need a fix each; accept them one by one.'); return; }
+  const btn = s === 'accept' ? $('#bulkOk') : $('#bulkNo');
+  if (armed !== s) {                              // two-step confirm, built into the page
+    armed = s; btn.classList.add('arm');
+    btn.textContent = `${s === 'accept' ? 'Accept' : 'Reject'} ${vis.length}? Click again`;
+    clearTimeout(bulk.t); bulk.t = setTimeout(disarm, 4000);
+    return;
+  }
+  disarm();
+  let done = 0, failed = 0;
+  vis.forEach(r => { decisions[r.id] = s; });
+  render();
+  const queue = vis.slice();
+  async function worker() {
+    while (queue.length) {
+      const r = queue.shift();
+      try {
+        const doc = { round, id: r.id, status: s, category: r.category,
+          rule: r.rule, file: r.file, line: r.line, occ: r.occ, current: r.current, proposed: r.proposed,
+          decidedAt: new Date().toISOString() };
+        await sink.set(doc); docs[r.id] = doc;
+        done++;
+      } catch { failed++; delete decisions[r.id]; }
+    }
+  }
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  render();
+  toast(failed ? `Saved ${done}; ${failed} could not be saved` : `${s === 'accept' ? 'Accepted' : 'Rejected'} ${done} edit(s)`);
+}
+function disarm() {
+  armed = null;
+  $('#bulkOk').classList.remove('arm'); $('#bulkNo').classList.remove('arm');
+  $('#bulkOk').textContent = 'Accept all shown'; $('#bulkNo').textContent = 'Reject all shown';
+}
+
+function move(d) {
+  const vis = filtered(); if (!vis.length) return;
+  const i = vis.findIndex(r => r.id === cur);
+  cur = vis[i < 0 ? 0 : Math.max(0, Math.min(vis.length - 1, i + d))].id;
+  renderList();
+  const el = document.querySelector(`.edit[data-id="${cur}"]`);
+  if (el) { el.scrollIntoView({ block: 'center' }); el.focus({ preventScroll: true }); }
+}
+
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-cat]'), st = e.target.closest('[data-stat]'), a = e.target.closest('[data-act]');
+  const rd = e.target.closest('[data-round]');
+  if (rd) { selectRound(rd.dataset.round); return; }
+  if (c) { cat = c.dataset.cat; store.set('cat', cat); render(); }
+  else if (st) { stat = st.dataset.stat; store.set('stat', stat); render(); }
+  else if (a) { const id = +a.closest('.edit').dataset.id; cur = id; decide(rows.find(r => r.id === id), a.dataset.act); }
+});
+$('#q').addEventListener('input', renderList);
+$('#bulkOk').addEventListener('click', () => bulk('accept'));
+$('#bulkNo').addEventListener('click', () => bulk('reject'));
+document.addEventListener('keydown', e => {
+  const fi = e.target.closest && e.target.closest('[data-fix]');
+  if (fi && e.key === 'Enter' && (fi.tagName !== 'TEXTAREA' || e.metaKey || e.ctrlKey)) { e.preventDefault(); const r = rows.find(x => x.id === +fi.dataset.fix); cur = r.id; decide(r, 'accept'); return; }
+  if (/INPUT|TEXTAREA/.test(document.activeElement.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const r = rows.find(x => x.id === cur);
+  if (e.key === 'j') move(1);
+  else if (e.key === 'k') move(-1);
+  else if (e.key === 'a' && r) { decide(r, 'accept'); }
+  else if (e.key === 'r' && r) { decide(r, 'reject'); }
+  else if (e.key === 'u' && r && decisions[r.id]) { decide(r, decisions[r.id]); }
+  else return;
+  e.preventDefault();
+});
+
+let rounds = [], unsub = null;
+
+function subscribe() {
+  if (unsub) { unsub(); unsub = null; }
+  if (!sink) return;
+  const want = round;
+  unsub = sink.watch(want, list => {
+    if (round !== want) return;
+    const next = {}, nf = {}, nd = {};
+    list.forEach(v => {
+      if (v && (v.status === 'accept' || v.status === 'reject')) { next[v.id] = v.status; nd[v.id] = v; if (typeof v.proposed === 'string') nf[v.id] = v.proposed; } });
+    decisions = next; docs = nd; fixes = Object.assign(nf, fixes);
+    render();
+  }, () => {
+    const n = $('#notice'); n.hidden = false;
+    n.textContent = 'Lost the connection to saved decisions. Reload the page to continue.';
+  });
+}
+
+function selectRound(id) {
+  const r = rounds.find(x => x.round === id) || rounds[rounds.length - 1];
+  round = r.round; rows = r.rows; decisions = {}; fixes = {}; docs = {}; cur = null;
+  const secs = [...new Set(rows.map(x => x.section).filter(Boolean))];
+  CATS = [BASE_CATS[0], ...secs.map(sn => ['sec:' + sn, sn, x => x.section === sn]),
+          ...BASE_CATS.slice(1).filter(c => !secs.length && rows.some(c[2]))];
+  if (!CATS.some(c => c[0] === cat)) cat = 'all';
+  $('#focus').textContent = r.title || '';
+  $('#rounds').hidden = rounds.length < 2;
+  $('#rounds').innerHTML = rounds.map(x =>
+    `<button class="chip" data-round="${esc(x.round)}" aria-pressed="${x.round === round}">${esc(x.label || x.round)}</button>`).join('');
+  store.set('round', round);
+  render();
+  subscribe();
+}
+
+// The exported file: what `proof.py import` reads. No reviewer identity in it.
+function exportDecisions() {
+  const list = rows.filter(r => decisions[r.id] && docs[r.id]).map(r => docs[r.id]);
+  if (!list.length) { toast('Nothing decided in this round yet.'); return; }
+  const body = JSON.stringify({ format: 'stotrasamhita-decisions', version: 1, round, rows: rows.length,
+                                exportedAt: new Date().toISOString(), decisions: list }, null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+  a.download = `decisions-${round}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`Exported ${list.length} decision(s) for round ${round}`);
+}
+
+function docsOf(data) {                          // the same forms `proof.py import` accepts
+  let list = Array.isArray(data) ? data : data && Array.isArray(data.decisions) ? data.decisions
+    : data && data.decisions && typeof data.decisions === 'object' ? Object.values(data.decisions) : [data];
+  return list.filter(d => d && typeof d === 'object').map(d => d.data || d);
+}
+
+async function importDecisions(file) {
+  let list;
+  try { list = docsOf(JSON.parse(await file.text())); }
+  catch { toast('That file is not a decisions export.'); return; }
+  const byRound = Object.fromEntries(rounds.map(x => [x.round, new Set(x.rows.map(r => r.id))]));
+  let n = 0, skipped = 0, failed = 0;
+  for (const d of list) {
+    if (!byRound[d.round] || !byRound[d.round].has(d.id) || !['accept', 'reject'].includes(d.status)) { skipped++; continue; }
+    try { await sink.set(d); n++; } catch { failed++; }
+  }
+  subscribe();                                   // re-read the store for the round on screen
+  const here = list.filter(d => d.round === round).length;
+  toast(`Imported ${n}` + (skipped ? `, skipped ${skipped} (not in these rounds)` : '') + (failed ? `, ${failed} failed` : '')
+        + (n && !here ? '. They are for another round: pick it above.' : ''));
+}
+
+$('#exportBtn').addEventListener('click', exportDecisions);
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (f) importDecisions(f);
+});
+
+async function start() {
+  try {
+    const inline = $('#edits-data').textContent.trim();     // `proof.py site --inline`
+    const data = inline ? JSON.parse(inline) : await (await fetch('edits.json')).json();
+    rounds = data.rounds || [{ round: data.round, title: data.title, rows: data.rows }];
+    if (data.rounds && data.title) { $('#title').textContent = data.title; document.title = data.title; }
+    if (data.intro) $('#sub').textContent = data.intro;
+  } catch {
+    $('#list').innerHTML = '<div class="empty">The list of edits did not load. Reload the page.</div>';
+    return;
+  }
+  const saved = store.get('round', null);
+  round = (rounds.find(x => x.round === saved) || rounds[rounds.length - 1]).round;
+  for (const make of STORES) { try { sink = await make(); } catch { sink = null; } if (sink) break; }
+  selectRound(round);
+  if (!sink) {
+    const n = $('#notice'); n.hidden = false;
+    n.textContent = 'Decisions cannot be saved in this view. Open the page signed in to claude.ai, or locally with `proof.py review ROUND.json`.';
+    return;
+  }
+  if (sink.path) $('#where').textContent = `Decisions are saved to ${sink.path} as you go.`;
+  if (sink.name === 'browser') $('#where').textContent = sink.persistent
+    ? 'Decisions are kept in this browser only. When you are done, export them and send the file to the editor.'
+    : 'This browser will not keep your decisions after the page closes: export them before you leave.';
+  canWrite = true;
+  $('#importBtn').disabled = false;
+  render();
+}
+start();
+</script>
+
+</body></html>

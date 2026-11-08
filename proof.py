@@ -14,9 +14,14 @@
   proof.py apply-edits X.csv         apply the approved rows
   proof.py splits [FILES] --out X.csv likely word splits from the learned model
   proof.py serve FILE|DIR...         review in the browser (fix / accept / approve)
+  proof.py review ROUND.json         review a built round in the browser -> decisions/ROUND.json
+  proof.py import ROUND.json FILE    merge decisions exported from a review page
+  proof.py apply ROUND [--dry-run]   apply it: mis-click check, edits, rejects to accepted.txt
+  proof.py site ROUND.json --out D   static review page (decisions kept in the browser)
 """
 
 import argparse
+import json
 import difflib
 import os
 import sys
@@ -26,8 +31,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from proofreader.checks import REPORT_THRESHOLD, DocContext, score_word, verse_ok  # noqa: E402
 from proofreader.index import Index, read_manifest, rel, root_dir  # noqa: E402
-from proofreader.session import (Session, add_accepted, approve, expand_paths,  # noqa: E402
-                                 load_accepted)
+from proofreader.session import (ACCEPTED, Session, add_accepted, approve,  # noqa: E402
+                                 expand_paths, load_accepted)
 from proofreader.text import key, parse_file  # noqa: E402
 
 def get_meter(args):
@@ -215,6 +220,165 @@ def cmd_serve(args):
     serve(expand_paths(args.files), args.host, args.port, meter=not args.no_meter)
 
 
+def _show(path):
+    r = os.path.relpath(path)
+    return path if r.startswith('..') else r
+
+
+def _import(rounds_path, rounds, decisions_dir, sources):
+    """Merge decisions from exported files or directories into decisions/<round>.json."""
+    from proofreader.rounds import DecisionFile, read_decisions
+    docs = [d for src in sources for d in read_decisions(src)]
+    known = {r['round'] for r in rounds}
+    for r in rounds:
+        df = DecisionFile(r['round'], rounds_path, decisions_dir)
+        n = df.import_docs(docs, {x['id'] for x in r['rows']})
+        print(f'round {r["round"]}: ' + ', '.join(f'{v} {k}' for k, v in sorted(n.items()) if v)
+              + (' (nothing for this round)' if not n else '') + f' -> {_show(df.path)}')
+        if n['applied']:
+            print(f'  {n["applied"]} differ from a decision already applied: kept the applied one')
+        if n['unknown']:
+            print(f'  {n["unknown"]} for row ids not in {rounds_path}: skipped')
+    other = sorted({d.get('round') for d in docs} - known - {None})
+    if other:
+        print(f'skipped decisions for other rounds: {", ".join(other)}')
+
+
+def cmd_review(args):
+    """Serve the shared review page for a round file; decisions go to decisions/<round>.json."""
+    from proofreader.rounds import load_rounds
+    from proofreader.roundserver import serve
+    title, rounds = load_rounds(args.rounds, args.round)
+    if args.title:
+        title = args.title
+    if args.import_from:
+        _import(args.rounds, rounds, args.decisions, args.import_from)
+    serve(args.rounds, title, rounds, args.decisions, args.host, args.port)
+
+
+def cmd_import(args):
+    from proofreader.rounds import load_rounds
+    _import(args.rounds, load_rounds(args.rounds, args.round)[1], args.decisions, args.sources)
+
+
+def cmd_site(args):
+    """Write a static review page (index.html + edits.json) that saves decisions in the browser."""
+    from proofreader.roundserver import PAGE
+    from proofreader.rounds import load_rounds
+    title, rounds = args.title or '', []
+    for p in args.rounds:
+        t, rs = load_rounds(p)
+        title = title or t
+        rounds += rs
+    ids = [r['round'] for r in rounds]
+    if len(ids) != len(set(ids)):
+        sys.exit(f'the same round id in two files: {ids}')
+    data = json.dumps({'title': title, 'rounds': rounds}, ensure_ascii=False)
+    with open(PAGE, encoding='utf-8') as f:
+        page = f.read()
+    os.makedirs(args.out, exist_ok=True)
+    if args.inline:             # one self-contained file; opens from disk too
+        tag = '<script type="application/json" id="edits-data"></script>'
+        assert tag in page
+        page = page.replace(tag, tag.replace('></', '>' + data.replace('</', '<\\/') + '</'))
+    else:
+        with open(os.path.join(args.out, 'edits.json'), 'w', encoding='utf-8') as f:
+            f.write(data)
+    with open(os.path.join(args.out, 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(page)
+    print(f'{len(rounds)} round(s), {sum(len(r["rows"]) for r in rounds)} rows -> {args.out}/index.html'
+          + ('' if args.inline else ' + edits.json'))
+
+
+def _keeps(row, idx, accepted, note):
+    """accepted.txt lines for a rejected row: the word(s) as printed, or the
+    verse's first line. A metre row outside a verse (a nāmāvalī name) keeps
+    the word instead."""
+    from proofreader.checks import verse_id
+    from proofreader.text import WORD_RE
+    if row['category'] == 'meter':
+        units = [u for u in parse_file(os.path.join(root_dir(), row['file'])) if u.kind == 'verse'
+                 and any(l.lineno == row['line'] for l in u.lines)]
+        if units:
+            first = units[0].lines[0].text.strip()
+            return [] if verse_id([first]) in accepted else [f'meter: {first}  # {note}']
+    elif row['category'] != 'word':
+        return []           # style rows: a reject is a split label, not a kept word
+    words = WORD_RE.findall(row['current'])
+    if len(words) > 1:      # 'आनन्दवत्यै~नमः': keep only what gold does not know
+        words = [w for w in words if not idx.words[key(w)]] or words
+    return [f'{w}  # {note}' for w in dict.fromkeys(words) if key(w) not in accepted]
+
+
+def cmd_apply(args):
+    """Apply a round reviewed with `proof.py review`: mis-click check, the
+    accepted edits, split labels, and rejects to accepted.txt. Decisions
+    already applied are skipped, so a round can be applied as it goes."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corpus-checks'))
+    import apply_round
+    import misclick
+    from proofreader.rounds import DecisionFile, load_rounds
+    df = DecisionFile(args.round, directory=args.decisions)
+    if not os.path.exists(df.path):
+        sys.exit(f'no decisions file {df.path}; review the round first (proof.py review ROUND.json)')
+    rows_path = args.rows or df.rows_path
+    if not rows_path or not os.path.exists(rows_path):
+        sys.exit(f'{df.path}: its round file {rows_path!r} is missing; pass --rows')
+    R = {r['id']: r for r in load_rounds(rows_path, args.round)[1][0]['rows']}
+    if args.skip:
+        df.mark_applied(int(i) for i in args.skip.split(','))
+    done = set(df.data['applied'])
+    D = {int(i): d for i, d in df.data['decisions'].items() if int(i) not in done}
+    print(f'round {args.round}: {len(R)} rows, {len(df.data["decisions"])} decided, '
+          f'{len(done)} applied before, {len(D)} to apply now')
+    if not D:
+        return
+    n = misclick.check(R, D)
+    n.pop('missing', None)
+    if (n['stale'] or n['mixed'] or n['unknown']) and not args.force:
+        sys.exit('stopped: stale, mixed or unknown decisions above. Fix them on the page, '
+                 'or sign them off and re-run with --force.')
+    if n['edited']:
+        print('(edited proposals above: check them by eye, and that verse lines still scan)')
+
+    idx, accepted = Index.load(), load_accepted()
+    keeps = []
+    for i, d in sorted(D.items()):
+        if d['status'] == 'reject':
+            keeps += _keeps(R[i], idx, accepted, f'{args.round}-{i} reviewed: kept as printed')
+    if args.dry_run:
+        rows, miss, labels = apply_round.plan(R, list(D.values()))
+        for r in rows:
+            print(f'would apply #{r["id"]} {r["file"]}:{r["line"]}  {r["current"]} -> {r["proposed"]}')
+        for m in miss:
+            print(f'  MISSING #{m["id"]} {m["file"]}:{m["line"]} {m["current"]}')
+        for k in keeps:
+            print(f'would keep  {k}')
+        print(f'{len(rows)} edit(s), {len(miss)} not found, {len(labels)} label(s), '
+              f'{len(keeps)} keep(s); nothing written')
+        return
+
+    csv_path = df.path[:-len('.json')] + '.apply.csv'
+    applied, failed, miss, labels = apply_round.apply(R, list(D.values()), csv_path)
+    if keeps:
+        with open(ACCEPTED, 'a', encoding='utf-8') as f:
+            f.write(''.join(k + '\n' for k in keeps))
+    print(f'applied {applied}, failed {len(failed)}, not found {len(miss)}, '
+          f'labels +{len(labels)}, accepted.txt +{len(keeps)}')
+    held = {m['id'] for m in miss}
+    for m in miss:
+        print(f'  MISSING #{m["id"]} {m["file"]}:{m["line"]} {m["current"]}')
+    for f in failed:
+        print('  FAILED', f)
+        held.add(int(f.split()[0].lstrip('#')))
+    for k in keeps:
+        print('  kept', k)
+    df.mark_applied(set(D) - held)
+    if held:
+        print(f'{len(held)} row(s) not applied: {",".join(map(str, sorted(held)))}. Edit them by hand '
+              f'and mark them done with --skip, or re-run to retry them.')
+
+
 def cmd_eval(args):
     """Check ORIG against gold minus FIXED, then score the flags against the
     corrections that FIXED actually made."""
@@ -347,6 +511,38 @@ def main():
     p.add_argument('--port', type=int, default=8765)
     p.add_argument('--no-meter', action='store_true')
     p.set_defaults(fn=cmd_serve)
+    p = sub.add_parser('review', help='review a round file in the browser; decisions to decisions/ROUND.json')
+    p.add_argument('rounds', metavar='ROUND.json', help="a builder's round file, or a page's edits.json")
+    p.add_argument('--round', help='which round, if the file holds several (default: all)')
+    p.add_argument('--title', help='page heading')
+    p.add_argument('--decisions', help='decisions directory (default: decisions/)')
+    p.add_argument('--import', dest='import_from', metavar='FILE|DIR', action='append',
+                   help='first merge in exported decisions (see `import`); repeatable')
+    p.add_argument('--host', default='127.0.0.1')
+    p.add_argument('--port', type=int, default=8766)
+    p.set_defaults(fn=cmd_review)
+    p = sub.add_parser('import', help='merge exported decisions into decisions/ROUND.json')
+    p.add_argument('rounds', metavar='ROUND.json', help='the round file the decisions are for')
+    p.add_argument('sources', nargs='+', metavar='FILE|DIR',
+                   help="a file exported from the review page, or a directory of artifact-DB docs")
+    p.add_argument('--round', help='only this round, if the file holds several')
+    p.add_argument('--decisions', help='decisions directory (default: decisions/)')
+    p.set_defaults(fn=cmd_import)
+    p = sub.add_parser('site', help='static review page that keeps decisions in the browser')
+    p.add_argument('rounds', nargs='+', metavar='ROUND.json')
+    p.add_argument('--out', required=True, help='output directory')
+    p.add_argument('--title', help='page heading')
+    p.add_argument('--inline', action='store_true', help='put the rows inside index.html (one file)')
+    p.set_defaults(fn=cmd_site)
+    p = sub.add_parser('apply', help="apply a reviewed round: mis-click check, edits, labels, rejects to accepted.txt")
+    p.add_argument('round', metavar='ROUND', help='round id, e.g. E1 (reads decisions/E1.json)')
+    p.add_argument('--decisions', help='decisions directory (default: decisions/)')
+    p.add_argument('--rows', help='the round file, if it moved since the review')
+    p.add_argument('--dry-run', action='store_true', help='show what would change; write nothing')
+    p.add_argument('--force', action='store_true', help='apply despite stale or mixed decisions (signed off)')
+    p.add_argument('--skip', metavar='IDS', help='comma-separated row ids to mark done without applying '
+                   '(fixed by hand)')
+    p.set_defaults(fn=cmd_apply)
     p = sub.add_parser('approve')
     p.add_argument('files', nargs='+')
     p.set_defaults(fn=cmd_approve)

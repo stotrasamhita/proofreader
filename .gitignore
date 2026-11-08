@@ -1,3 +1,5 @@
-index/
+/index
 __pycache__/
-review/
+/review
+decisions/*.apply.csv
+decisions/*.tmp
