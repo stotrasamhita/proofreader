@@ -607,3 +607,5 @@ meter: इति प्रपन्नां शरणं द्विजाङ�
 लोमशनामानं  # C4-479 reviewed: kept as printed (Vrata-rāja; Padma लोमशनामायं)
 माहात्म्यमेतस्याः  # C4-486 reviewed: kept as printed (Vrata-rāja; Padma माहात्म्यमेतस्या)
 विमुक्तयोः  # C4-511 reviewed: kept as printed (Vrata-rāja; Padma वियुक्तयोः)
+समीरितं  # C5-6 reviewed: kept as printed (Vrata-rāja; Padma समाहितं)
+गर्जति  # C5-144 reviewed: kept as printed (Vrata-rāja; Padma गर्जन्ति)
