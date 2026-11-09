@@ -619,3 +619,4 @@ meter: इति प्रपन्नां शरणं द्विजाङ�
 अपूजयच्च  # C5-544 reviewed: kept as printed (Vrata-rāja word check)
 रौप्यतण्डुलसंयुतम्  # C5-550 reviewed: kept as printed (Vrata-rāja word check)
 अवतीर्यागमद्धीमानम्बरान्नारदो  # C5-553 reviewed: kept as printed (Vrata-rāja word check)
+गीरसज्ञाय  # D1-24 reviewed: kept as printed (Gakārādi Gaṇapati 1000, checked against the print; stotram गीरसन्नोऽथ)
