@@ -153,6 +153,12 @@ These are the ideas used to bring the gold corpus to a clean state (October 2026
 - **Found (2026-10-30, Gaṅgā-sahasranāmāvalī):** the Kāśīkhaṇḍa stotram scans throughout (verses 17–168). The book breaks it in five places: इष्टापूर्तफलदा (a syllable short; stotram -फलप्रदा), चञ्चलद्युतिः (a syllable long; चलद्युतिः), धर्मकामार्थमोक्षदायिनी (two long; -मोक्षदा), विपञ्चीरूपा (two long; विपञ्ची), and बहुरूपा, an extra name in verse 126 while verse 135 lacks मतिदा (four long there, three short here). The other 24 differences scan either way. It also showed a name placed in the wrong verse (स्थाणुमौलिकृतालया: two names on one OCR line, and `fix1000.py` keyed moves by line).
 - **False hits:** the automatic substitution is rough at name edges (sandhi, consonant stems, -मात्रे) and for names moved between hits, so check every BAD by hand: `review/ganga/chandas_hand.py` puts each difference into the printed verse by hand (verse, stotram words, book words) and scans both; its table `chandas-hand.tsv` is what the review rows cite.
 
+### 24. Where a row sits in the print (`proofreader/locate.py`, `proof.py round --ocr`)
+- **Question:** which page of the scanned print holds this row, and what does the print read there?
+- **How:** the OCR is one file with pages headed `### NNNN.json` (the PDF page). Each row's line goes to the page sharing the most character 4-grams with it (Devanagari letters only), searched inside its file's page range (well-matched lines near their median page); near-ties go to the page of the nearest well-matched line, since stock formulas recur on many pages.
+- **Lines not in the print** (a saṅkalpa or upacāra an editor added) match weakly (under 0.35 of their 4-grams); they get the nearest matched line's page, marked `~`.
+- **It also checks the proposals:** the print line shown on each row confirmed भगवन्नच्युतानन्त, तन्मध्येऽष्टदलं, सप्तमीसहितो देव and यद्यागमं in round G1 (Vrataratnakara, 2026-11-09), and gave सप्तसप्तिवह प्रीत where I had guessed सप्तसप्तिप्रिय प्रीत.
+
 ## Checks for consistency (the same word written two ways)
 
 Each of these finds one word in two forms. One form is chosen and the other is changed to match. When both forms are legitimately different words (ते न / तेन, तत् त्वं / तत्त्वं), a recorded sign-off settles it.

@@ -29,10 +29,20 @@ The texts themselves are not needed.
 ./proof.py setup        # once: fetches verse-checker into vendor/, builds index/ from gold-index.json.gz
 ./proof.py check gh:stotrasamhita/stotra-sangrahah:stotras/nadi/GangaStotram.tex
 ./proof.py check https://github.com/OWNER/REPO/blob/BRANCH/path/to/file.tex
-./proof.py round gh:OWNER/REPO@v1.2:chapters --id R1 --out round-R1.json
+./proof.py round gh:OWNER/REPO@v1.2:chapters --id R1 --out round-R1.json   # --ocr OCR.txt: PDF pages
 ./proof.py review round-R1.json        # or: proof.py site round-R1.json --out DIR
 ./proof.py apply R1                    # edits the fetched copy: git -C work/REPO diff
 ```
+
+A round has three sections: **Metre**, **Consonant splits** (a consonant-final word
+run into the next, written apart by house rule: `corpus-checks/freeword.py` and
+`tjoin.py`; needs the gold texts, so it is skipped without the repos; `--no-splits`
+leaves it out) and **Words**. Every row carries `chap` (the text, its section and
+verse number), and the review page has a drop-down to show one text at a time.
+Given the print's OCR with `--ocr OCR.txt` (one file, each page headed
+`### NNNN.json`, NNNN the PDF page), each row also gets that PDF page and the
+print's line, shown on the page (`~` = near it: the line is not in the print);
+type a page number in the search box to list that page's rows.
 
 A source is `gh:OWNER/REPO[@REF][:PATH]` (a file, a folder, or the whole repo)
 or a GitHub link to one. It is fetched into `work/REPO/` as a shallow clone of

@@ -96,6 +96,12 @@ ins { background: var(--ins); color: var(--ins-ink); }
 .verse b { color: var(--ink); font-weight: 600; }
 .verse.scan { color: var(--ink); }
 .vnum { font: 600 13px var(--mono); color: var(--ink); }
+.chap { font-weight: 600; color: var(--ink); }
+.pg { font-weight: 700; color: var(--accent); white-space: nowrap; }
+.ocr { font-size: 0.92em; color: var(--muted); margin: 4px 0 2px; overflow-wrap: anywhere; }
+.ocr span { font-size: 0.75em; text-transform: uppercase; letter-spacing: .04em; margin-right: 4px; }
+#chap { flex: 0 1 260px; min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--ink); font: 14px var(--ui); }
 .verse mark { background: var(--del); color: var(--del-ink); border-radius: 3px; padding: 0 1px; margin: 0 1px;
   box-shadow: 0 0 0 1px var(--del-ink) inset; }
 .verse mark.soft { background: transparent; color: var(--ink); box-shadow: none; outline: 1.5px dashed var(--accent); outline-offset: -1px; }
@@ -144,7 +150,8 @@ kbd { font: 11.5px var(--mono); border: 1px solid var(--line); border-bottom-wid
     <div class="chips" id="cats" role="group" aria-label="Kind of edit"></div>
     <div class="chips" id="stats" role="group" aria-label="Decision"></div>
     <div class="row2">
-      <input id="q" type="search" placeholder="Filter by file or text" autocomplete="off">
+      <select id="chap" aria-label="Text or chapter" hidden></select>
+      <input id="q" type="search" placeholder="Filter by file, text or PDF page" autocomplete="off">
       <button class="btn ok" id="bulkOk">Accept all shown</button>
       <button class="btn no" id="bulkNo">Reject all shown</button>
       <span class="shown" id="shown"></span>
@@ -275,8 +282,9 @@ function kindPill(r) {
 
 function filtered() {
   const f = CATS.find(c => c[0] === cat)[2], q = $('#q').value.trim().toLowerCase();
-  return rows.filter(r => f(r) && (stat === 'any' || status(r) === stat) &&
-    (!q || r.file.toLowerCase().includes(q) || r.current.includes(q) || r.proposed.includes(q) || r.context.includes(q)));
+  return rows.filter(r => f(r) && (stat === 'any' || status(r) === stat) && (!chap || chapOf(r) === chap) &&
+    (!q || r.file.toLowerCase().includes(q) || r.current.includes(q) || r.proposed.includes(q) || r.context.includes(q) ||
+     (r.chap || '').includes(q) || String(r.page) === q));
 }
 
 function renderTally() {
@@ -290,6 +298,12 @@ function renderTally() {
   $('#cats').innerHTML = CATS.map(([k, label, f]) => {
     const total = rows.filter(f).length, pend = rows.filter(r => f(r) && status(r) === 'pending').length;
     return `<button class="chip" data-cat="${k}" aria-pressed="${k === cat}">${label}<small>${pend}/${total}</small></button>`;
+  }).join('');
+  const sel = $('#chap');
+  sel.hidden = !CHAPS.length;
+  sel.innerHTML = `<option value="">All texts</option>` + CHAPS.map(k => {
+    const pend = rows.filter(r => chapOf(r) === k && status(r) === 'pending').length;
+    return `<option value="${esc(k)}"${k === chap ? ' selected' : ''}>${esc(k)} (${pend} pending)</option>`;
   }).join('');
   $('#stats').innerHTML = STATS.map(([k, label]) =>
     `<button class="chip" data-stat="${k}" aria-pressed="${k === stat}">${label}</button>`).join('');
@@ -306,8 +320,9 @@ function renderList() {
     const parts = r.file.split('/'), name = parts.pop();
     if (ERRORISH(r)) return errorRow(r, s, parts, name);
     return `<article class="edit ${s}${r.id === cur ? ' cur' : ''}" data-id="${r.id}" tabindex="-1">
-      <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${kindPill(r)}<span>#${r.id}</span></div>
+      <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${r.chap ? `<span class="chap">${esc(r.chap)}</span>` : ''}${r.page ? `<span class="pg" title="${r.page_approx ? 'Near this PDF page: the line itself is not in the print (e.g. a stock saṅkalpa)' : 'Page of the scanned PDF'}">PDF p. ${r.page_approx ? '~' : ''}${r.page}</span>` : ''}${kindPill(r)}<span>#${r.id}</span></div>
       <div class="lines"><div class="ln"><span>−</span><span>${b}</span></div><div class="ln"><span>+</span><span>${a}</span></div></div>
+      ${r.ocr ? `<div class="ocr" lang="sa"><span>print</span> ${esc(r.ocr)}</div>` : ''}
       <div class="note">${esc(r.note)}</div>
       <div class="acts">
         <button class="btn ok" data-act="accept" aria-pressed="${s === 'accept'}" ${canWrite ? '' : 'disabled'}>Accept</button>
@@ -327,13 +342,14 @@ function errorRow(r, s, parts, name) {
   const pat = notes.filter(n => n.startsWith('pattern:')).join('\n');
   const text = notes.filter(n => !n.startsWith('pattern:')).join(' · ');
   return `<article class="edit ${s}${r.id === cur ? ' cur' : ''}" data-id="${r.id}" tabindex="-1">
-    <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${r.vnum ? `<span class="vnum">${/^[0-9]/.test(r.vnum) ? "verse " : ""}${esc(r.vnum)}</span>` : ''}${kindPill(r)}<span>#${r.id}</span></div>
+    <div class="meta"><span class="path">${esc(parts.join('/'))}/<b>${esc(name)}</b>:${r.line}</span>${r.chap ? `<span class="chap">${esc(r.chap)}</span>` : ''}${r.page ? `<span class="pg" title="${r.page_approx ? 'Near this PDF page: the line itself is not in the print (e.g. a stock saṅkalpa)' : 'Page of the scanned PDF'}">PDF p. ${r.page_approx ? '~' : ''}${r.page}</span>` : ''}${r.vnum ? `<span class="vnum">${/^[0-9]/.test(r.vnum) ? "verse " : ""}${esc(r.vnum)}</span>` : ''}${kindPill(r)}<span>#${r.id}</span></div>
     <div class="lines">${verse}
       ${whole
         ? `<label class="fix whole"><span class="keys">Verse</span>
         <textarea id="fix-${r.id}" data-fix="${r.id}" rows="${fixed.split('\n').length}" spellcheck="false" ${canWrite ? '' : 'disabled'} aria-label="Corrected verse, one pāda per line">${esc(fixed)}</textarea></label></div>`
         : `<label class="fix"><span class="keys">${r.category === 'meter' ? 'Pāda' : 'Fix'}</span>
         <input id="fix-${r.id}" data-fix="${r.id}" value="${esc(fixed)}" ${canWrite ? '' : 'disabled'} aria-label="Corrected text"></label></div>`}
+    ${r.ocr ? `<div class="ocr" lang="sa"><span>print</span> ${esc(r.ocr)}</div>` : ''}
     <div class="note">${esc(text)}${pat ? `<div class="pattern">${esc(pat)}</div>` : ''}</div>
     <div class="acts">
       <button class="btn ok" data-act="accept" aria-pressed="${s === 'accept'}" ${canWrite ? '' : 'disabled'}>Fix</button>
@@ -429,6 +445,7 @@ document.addEventListener('click', e => {
   else if (a) { const id = +a.closest('.edit').dataset.id; cur = id; decide(rows.find(r => r.id === id), a.dataset.act); }
 });
 $('#q').addEventListener('input', renderList);
+$('#chap').addEventListener('change', e => { chap = e.target.value; renderList(); });
 $('#bulkOk').addEventListener('click', () => bulk('accept'));
 $('#bulkNo').addEventListener('click', () => bulk('reject'));
 document.addEventListener('keydown', e => {
@@ -464,6 +481,10 @@ function subscribe() {
   });
 }
 
+// text filter: the part of r.chap before the first ' · ' (a text, or a chapter of one), in row order
+let chap = '', CHAPS = [];
+const chapOf = r => (r.chap || '').split(' · ')[0];
+
 function selectRound(id) {
   const r = rounds.find(x => x.round === id) || rounds[rounds.length - 1];
   round = r.round; rows = r.rows; decisions = {}; fixes = {}; docs = {}; cur = null;
@@ -471,6 +492,10 @@ function selectRound(id) {
   CATS = [BASE_CATS[0], ...secs.map(sn => ['sec:' + sn, sn, x => x.section === sn]),
           ...BASE_CATS.slice(1).filter(c => !secs.length && rows.some(c[2]))];
   if (!CATS.some(c => c[0] === cat)) cat = 'all';
+  const first = {};
+  rows.forEach((x, i) => { const k = chapOf(x); if (k && !(k in first)) first[k] = i; });
+  CHAPS = Object.keys(first).length > 1 ? Object.keys(first).sort((a, b) => first[a] - first[b]) : [];
+  if (!CHAPS.includes(chap)) chap = '';
   $('#focus').textContent = r.title || '';
   $('#rounds').hidden = rounds.length < 2;
   $('#rounds').innerHTML = rounds.map(x =>

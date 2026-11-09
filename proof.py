@@ -38,6 +38,7 @@ from proofreader.index import Index, read_manifest, rel, root_dir  # noqa: E402
 from proofreader.session import (ACCEPTED, Session, add_accepted, approve,  # noqa: E402
                                  expand_paths, load_accepted)
 from proofreader.text import key, parse_file  # noqa: E402
+from proofreader import locate  # noqa: E402
 
 def get_meter(args):
     if args.no_meter:
@@ -539,9 +540,25 @@ def cmd_round(args):
         if session.meter:
             rows += _verse_rows(p, rp, [f for f in fs if f.kind == 'meter'], session.meter)
     session.close()
-    rows.sort(key=lambda r: (r['file'], r['line'], r['category'] != 'meter'))
+    for r in rows:
+        r['section'] = 'Metre' if r['category'] == 'meter' else 'Words'
+    if not args.no_splits:
+        rows += _split_rows(files)
+    order = {'Metre': 0, 'Consonant splits': 1, 'Words': 2}
+    rows.sort(key=lambda r: (order[r['section']], r['file'], r['line']))
+    lines = {}
+
+    def read_lines(rp):
+        if rp not in lines:
+            with open(os.path.join(root_dir(), rp), encoding='utf-8', errors='replace') as fh:
+                lines[rp] = fh.read().split('\n')
+        return lines[rp]
+    for r in rows:
+        r['chap'] = locate.chap(read_lines(r['file']), r['line'])
+    if args.ocr:
+        locate.add_pages(rows, read_lines, args.ocr)
     for i, r in enumerate(rows, 1):
-        r.update(id=i, round=args.id, section='Metre' if r['category'] == 'meter' else 'Words')
+        r.update(id=i, round=args.id)
     data = {'title': args.title or f'Review {args.id}', 'rounds': [
         {'round': args.id, 'label': args.id, 'title': ', '.join(s for s, _ in fetched) or
          ', '.join(sorted({r['file'] for r in rows})), 'rows': rows}]}
@@ -550,9 +567,42 @@ def cmd_round(args):
         data['sources'] = [{'source': s, 'commit': c} for s, c in fetched]
     with open(args.out, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    c = Counter(r['category'] for r in rows)
-    print(f'{len(files)} file(s): {c["word"]} word rows, {c["meter"]} metre rows -> {args.out}\n'
+    c = Counter(r['section'] for r in rows)
+    print(f'{len(files)} file(s): {c["Words"]} word rows, {c["Metre"]} metre rows, '
+          f'{c["Consonant splits"]} consonant splits -> {args.out}\n'
           f'next: proof.py review {args.out}   (or proof.py site {args.out} --out DIR)', file=sys.stderr)
+
+
+def _split_rows(files):
+    """Consonant-final words run into the next word (house rule: written apart), from
+    corpus-checks/freeword.py and tjoin.py run on these files. Candidates, to be read."""
+    import subprocess
+    import tempfile
+    from proofreader.index import tool_dir
+    out, seen = [], set()
+    gold = read_manifest()
+    if not gold or not os.path.exists(os.path.join(root_dir(), gold[0])):
+        print('consonant splits skipped: the checks count words in the gold texts, which are not here '
+              '(clone the StotraSamhita repos next to proofreader/)', file=sys.stderr)
+        return out
+    for check, cols in (('freeword', (0, 1, 4, 5)), ('tjoin', (0, 1, 2, 3))):
+        with tempfile.NamedTemporaryFile('r', suffix='.tsv', encoding='utf-8') as tmp:
+            subprocess.run([sys.executable, os.path.join(tool_dir(), 'corpus-checks', check + '.py'), tmp.name,
+                            *[os.path.abspath(f) for f in files]], check=True, stdout=subprocess.DEVNULL,
+                           cwd=os.path.join(tool_dir(), 'corpus-checks'))
+            for l in tmp:
+                c = l.rstrip('\n').split('\t')
+                w, split, at, line = (c[i] for i in cols)
+                f, n = at.rsplit(':', 1)
+                rp = rel(f)
+                if (rp, n, w) in seen:
+                    continue
+                seen.add((rp, n, w))
+                out.append({'category': 'word', 'rule': 'split', 'section': 'Consonant splits', 'file': rp,
+                            'line': int(n), 'occ': 0, 'current': w, 'proposed': split, 'context': line.strip(),
+                            'note': f'house rule: a consonant-final word is written apart ({check}.py). '
+                                    'Reject if it is one word or a compound.'})
+    return out
 
 
 def cmd_eval(args):
@@ -711,6 +761,9 @@ def main():
     p.add_argument('--title', help='page heading')
     p.add_argument('--threshold', type=float, default=REPORT_THRESHOLD)
     p.add_argument('--no-meter', action='store_true')
+    p.add_argument('--no-splits', action='store_true', help='leave out the consonant-split rows')
+    p.add_argument('--ocr', metavar='OCR.txt', help="the print's OCR, pages headed '### NNNN.json': "
+                   'adds the PDF page and the print line to each row')
     p.set_defaults(fn=cmd_round)
     p = sub.add_parser('review', help='review a round file in the browser; decisions to decisions/ROUND.json')
     p.add_argument('rounds', metavar='ROUND.json', help="a builder's round file, or a page's edits.json")
