@@ -85,14 +85,13 @@ def _edit_near_end(a, b):
     return i >= max(len(a), len(b)) - 2
 
 
-def channel_best(w, idx):
-    """Best single look-alike edit of the surface word w by character-LM
-    gain, net of the edit prior. Returns (bits, candidate surface form);
-    bits < MIN_GAIN_BITS means keep w."""
+def channel_ranked(w, idx):
+    """Single look-alike edits of the surface word w, best first, as
+    (bits, candidate surface form): character-LM gain net of the edit prior,
+    only those of at least MIN_GAIN_BITS."""
     k = key(w)
     base = idx.logprob(k)
-    best = (0.0, '')
-    seen = {k}
+    out, seen = [], {k}
     for a, b in _EDITS:
         start = w.find(a)
         while start != -1:
@@ -101,10 +100,40 @@ def channel_best(w, idx):
             if ck and ck not in seen:
                 seen.add(ck)
                 gain = idx.logprob(ck) - base - EDIT_COST_BITS
-                if gain > best[0]:
-                    best = (gain, cand)
+                if gain >= MIN_GAIN_BITS:
+                    out.append((gain, cand))
             start = w.find(a, start + 1)
-    return best if best[0] >= MIN_GAIN_BITS else (0.0, '')
+    return sorted(out, reverse=True)
+
+
+def channel_best(w, idx, fits=None):
+    """Best single look-alike edit of w (and, given fits, the best one that
+    fits(candidate) allows). Returns (bits, candidate); (0.0, '') means keep w."""
+    for gain, cand in channel_ranked(w, idx):
+        if fits is None or fits(cand):
+            return gain, cand
+    return 0.0, ''
+
+
+def metre_fit(unit, line, word, meter):
+    """For a word of a verse: a test that a replacement keeps the chandas. A
+    verse that scans must still scan; one that does not must keep its syllable
+    pattern or come to scan. None outside verse, or when the word is split
+    across pādas."""
+    if meter is None or unit.kind != 'verse':
+        return None
+    lines = [l.text for l in unit.lines]
+    i = next((j for j, l in enumerate(unit.lines) if l is line), None)
+    if i is None or word not in lines[i]:
+        return None
+    base = verse_ok(lines, meter)
+
+    def fits(cand):
+        new = list(lines)
+        new[i] = new[i].replace(word, cand, 1)
+        ok, r = verse_ok(new, meter)
+        return ok if base[0] else (ok or r['patterns'] == base[1]['patterns'])
+    return fits
 
 
 class DocContext:
@@ -123,8 +152,9 @@ class DocContext:
         return len(self.tri_types.get(g, ()) - {k}) >= min_types
 
 
-def score_word(word, idx, accepted=frozenset(), doc=None):
-    """Returns (score, reasons, suggestion) for one word."""
+def score_word(word, idx, accepted=frozenset(), doc=None, fits=None):
+    """Returns (score, reasons, suggestion) for one word. fits(candidate), if
+    given, rules out suggestions (and the evidence they give) that break the metre."""
     w = clean(word)
     k = key(word)
     if k in accepted:
@@ -152,7 +182,7 @@ def score_word(word, idx, accepted=frozenset(), doc=None):
         score += 0.75 * min(u4, 3)
 
     suggestion = ''
-    best_bits, best_cand = channel_best(w, idx)
+    best_bits, best_cand = channel_best(w, idx, fits)
     if best_bits > 0:
         in_gold = idx.words.get(key(best_cand), 0) > 0
         gain = min(best_bits, 24) / 3 + (3 if in_gold else 0)
@@ -161,7 +191,7 @@ def score_word(word, idx, accepted=frozenset(), doc=None):
         reasons.append(f'{suggestion} is {best_bits:.0f} bits likelier'
                        + (' (gold word)' if in_gold else ''))
 
-    nb = idx.neighbours(k)
+    nb = [(b, c) for b, c in idx.neighbours(k) if fits is None or fits(idx.forms.get(b, b))]
     if nb:
         best, cnt = nb[0]
         suggestion = suggestion or idx.forms.get(best, best)
@@ -185,7 +215,7 @@ def check_file(path, idx, meter=None, accepted=frozenset(), display_path=None,
     doc = DocContext(w for u in units for w, _ in u.words())
     for unit in units:
         for word, line in unit.words():
-            s, reasons, sugg = score_word(word, idx, accepted, doc)
+            s, reasons, sugg = score_word(word, idx, accepted, doc, metre_fit(unit, line, word, meter))
             if s >= threshold:
                 out.append(Finding(display_path, line.lineno, 'word', word, round(s, 1),
                                    reasons, sugg, line.text))
