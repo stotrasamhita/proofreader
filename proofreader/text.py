@@ -40,6 +40,19 @@ _PARASAVARNA_RE = re.compile(
     '(?:ङ्(?=[कखगघङ])|ञ्(?=[चछजझञ])|ण्(?=[टठडढण])|न्(?=[तथदधन])|म्(?=[पफबभम]))')
 
 
+# Independent vowel -> its vowel sign, for rejoining a consonant-final pada
+# with the next one (प्रतापैर्- + अबन्धु -> प्रतापैरबन्धु).
+_VOWEL_SIGN = dict(zip('अआइईउऊऋॠऌएऐओऔ',
+                       ['', 'ा', 'ि', 'ी', 'ु', 'ू', 'ृ', 'ॄ', 'ॢ', 'े', 'ै', 'ो', 'ौ']))
+
+
+def _rejoin(a, b):
+    """Join the two halves of a word split at a pada break."""
+    if a.endswith('्') and b[:1] in _VOWEL_SIGN:
+        return a[:-1] + _VOWEL_SIGN[b[0]] + b[1:]
+    return a + b
+
+
 def clean(word):
     """Surface form used for display and orthography rules."""
     word = unicodedata.normalize('NFC', word)
@@ -81,7 +94,7 @@ class Unit:
         for line in self.lines:
             for j, t in enumerate(WORD_RE.findall(line.text)):
                 if j == 0 and join_next and out:
-                    out[-1] = (out[-1][0] + t, out[-1][1])
+                    out[-1] = (_rejoin(out[-1][0], t), out[-1][1])
                 else:
                     out.append((t, line))
             join_next = self.kind == 'verse' and line.text.rstrip().endswith('-')
